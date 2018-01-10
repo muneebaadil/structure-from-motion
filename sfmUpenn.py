@@ -19,6 +19,18 @@ def EstimateFundamentalMatrix(x1,x2):
     
     return F 
 
+def EstimateEssentialMatrix(K,F): 
+    E = K.T.dot(F.dot(K))
+    u,s,v = np.linalg.svd(E)
+    s[0] = 1.
+    s[1] = 1.
+    s[2] = 0.
+    E = u.dot(np.diag(s).dot(v))
+    #E = E / np.linalg.norm(E,'fro')
+    #probably need to add norm too 
+    
+    return E
+
 def RunSFM(filename): 
     variables = io.loadmat(filename)
     pass 
