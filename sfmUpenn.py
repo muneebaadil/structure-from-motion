@@ -55,6 +55,34 @@ def linearTriangulate(K, C1, R1, C2, R2, x1, x2):
         
     return X
 
+def LinearPnP(X, x, K): 
+    xh = np.hstack((x, np.ones((x.shape[0],1))))
+    Xh = np.hstack((X, np.ones((X.shape[0],1))))
+    xc = np.linalg.inv(K).dot(xh.T).T
+
+    A = np.zeros((X.shape[0]*3,12))
+
+    for i in xrange(X.shape[0]): 
+        A[i*3,:] = np.concatenate((np.zeros((4,)), -Xh[i,:], xc[i,1]*Xh[i,:]))
+        A[i*3+1,:] = np.concatenate((Xh[i,:], np.zeros((4,)), -xc[i,0]*Xh[i,:]))
+        A[i*3+2,:] = np.concatenate((-xc[i,1]*Xh[i,:], xc[i,0]*Xh[i,:], np.zeros((4,))))    
+    
+    u,s,v = np.linalg.svd(A)
+    P = v[-1,:].reshape((4,3),order='F').T
+    R, t = P[:,:3], P[:,-1]
+    
+    u,s,v = np.linalg.svd(R)
+    R = u.dot(v)
+    t = t/s[0]
+
+    if np.linalg.det(u.dot(v)) < 0:
+        R = R*-1
+        t = t*-1
+
+    C = -R.T.dot(t)
+    
+    return R, C
+
 def RunSFM(filename): 
     variables = io.loadmat(filename)
     pass 
