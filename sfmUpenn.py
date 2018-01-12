@@ -1,6 +1,9 @@
 import numpy as np 
 import scipy.io as io 
 
+import matplotlib.pyplot as plt 
+from mpl_toolkits.mplot3d import Axes3D
+
 def EstimateFundamentalMatrix(x1,x2): 
     A = np.zeros((x1.shape[0],9))
     for i in xrange(x1.shape[0]):
@@ -34,7 +37,7 @@ def EstimateEssentialMatrix(K,F):
 def Vec2Skew(vec): 
     return np.array([[0,-vec[2],vec[1]],[vec[2],0,-vec[0]],[-vec[1],vec[0],0]])
 
-def linearTriangulate(K, C1, R1, C2, R2, x1, x2): 
+def LinearTriangulate(K, C1, R1, C2, R2, x1, x2): 
     P1 = K.dot(np.hstack((R1,C1)))
     P2 = K.dot(np.hstack((R2,C2)))
     
@@ -91,7 +94,6 @@ def ExtractCameraPoses(E):
     
     Rs, Cs = np.zeros((4,3,3)), np.zeros((4,3))
     
-    print u.shape 
     Cs[0] = u[:,-1]
     Rs[0] = u.dot(W.dot(v.T))
     
@@ -109,6 +111,13 @@ def ExtractCameraPoses(E):
             Cs[i] = -1*Cs[i]
             Rs[i] = -1*Rs[i]
     return Rs, Cs
+
+def Display3DPoints(X): 
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter3D(varPnp['X'][:,0],varPnp['X'][:,1],varPnp['X'][:,2])    
+    return ax
 
 def RunSFM(filename): 
     variables = io.loadmat(filename)
