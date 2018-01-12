@@ -2,8 +2,8 @@ import numpy as np
 import scipy.io as io 
 
 def EstimateFundamentalMatrix(x1,x2): 
-    A = np.zeros((8,9))
-    for i in xrange(8):
+    A = np.zeros((x1.shape[0],9))
+    for i in xrange(x1.shape[0]):
         rowA = np.array([x1[i,0]*x2[i,0], x1[i,0]*x2[i,1], x1[i,0],
               x1[i,1]*x2[i,0], x1[i,1]*x2[i,1], x1[i,1],
               x2[i,0], x2[i,1], 1])
@@ -82,6 +82,33 @@ def LinearPnP(X, x, K):
     C = -R.T.dot(t)
     
     return R, C
+
+def ExtractCameraPoses(E):
+    assert(np.linalg.matrix_rank(E, tol=1e-7)==2)
+    
+    u,d,v = np.linalg.svd(E)
+    W = np.array([[0,-1,0],[1,0,0],[0,0,1]])
+    
+    Rs, Cs = np.zeros((4,3,3)), np.zeros((4,3))
+    
+    print u.shape 
+    Cs[0] = u[:,-1]
+    Rs[0] = u.dot(W.dot(v.T))
+    
+    Cs[1] = -u[:,-1]
+    Rs[1] = u.dot(W.dot(v.T))
+    
+    Cs[2] = u[:,-1]
+    Rs[2] = u.dot(W.T.dot(v.T))
+    
+    Cs[3] = -u[:,-1]
+    Rs[3] = u.dot(W.T.dot(v.T))
+    
+    for i in xrange(4):        
+        if np.linalg.det(Rs[i]) < 0: 
+            Cs[i] = -1*Cs[i]
+            Rs[i] = -1*Rs[i]
+    return Rs, Cs
 
 def RunSFM(filename): 
     variables = io.loadmat(filename)
