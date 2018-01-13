@@ -4,6 +4,8 @@ import scipy.io as io
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
 
+import cv2 
+
 def EstimateFundamentalMatrix(x1,x2): 
     A = np.zeros((x1.shape[0],9))
     for i in xrange(x1.shape[0]):
@@ -116,12 +118,40 @@ def Display3DPoints(X):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    ax.scatter3D(varPnp['X'][:,0],varPnp['X'][:,1],varPnp['X'][:,2])    
+    ax.scatter3D(X[:,0],X[:,1],X[:,2])    
     return ax
 
-def RunSFM(filename): 
-    variables = io.loadmat(filename)
-    pass 
+def RunSFM(filename=None): 
+    #LOADING IMAGES, KEYPOINTS ETC..
+    var = io.loadmat('variables.mat')
+    varPnp = io.loadmat('variablesPnP.mat')
+
+    img1=var['data'][0,0][6]
+    img2=var['data'][0,0][7]
+    img2=var['data'][0,0][8]
+
+    x1, x2, x3 = var['x1'],var['x2'],var['x3']
+    K = var['K']
+
+    C2,R2 = var['C'],var['R']
+    C1,R1 = np.ones((3,1)), np.eye(3,3)
+
+    P1 = K.dot(np.hstack((R1,C1)))
+    P2 = K.dot(np.hstack((R2,C2)))
+    
+    #FUNDAMENTAL MATRIX ESTIMATION
+    F = EstimateFundamentalMatrix(x1,x2)
+    
+    #ESSENTIAL MATRIX ESTIMATION
+    E = EstimateEssentialMatrix(K,F)
+    
+    #POSE ESTIMATION. (CHERIALITY CHECK IS DONE INTERNALLY)
+    _, R, t, masktwo = cv2.recoverPose(E, x1, x2, K)
+    
+    #LINEAR TRIANGULATION
+    X = LinearTriangulate(K, np.zeros((3,1)), np.eye(3,3), t, R, x1, x2)
+    
+    return X
 
 if __name__=='__main__':
     filename = 'variables.mat'
