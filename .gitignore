@@ -2,3 +2,4 @@ data/
 .ipynb*/
 *.ipynb
 *.pyc
+*.ply
