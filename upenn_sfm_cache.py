@@ -136,7 +136,7 @@ def LoadUPennData():
     C2,R2 = var['C'],var['R']
     C1,R1 = np.ones((3,1)), np.eye(3,3)
     
-    return img1,img2,img3, x1,x2,x3, C1,R1, C2,R2
+    return img1,img2,img3, x1,x2,x3, C1,R1, C2,R2,K
 
 def RunSFM(filename=None): 
     #LOADING IMAGES, KEYPOINTS ETC..
