@@ -11,9 +11,9 @@ def EstimateFundamentalMatrix(x1,x2):
     u,s,v = np.linalg.svd(A)
     F = v[-1,:].reshape((3,3),order='F')
 
-    # u,s,v = np.linalg.svd(F)
-    # F = u.dot(np.diag(s).dot(v))
+    u,s,v = np.linalg.svd(F)
+    F = u.dot(np.diag(s).dot(v))
 
-    # F = F / np.linalg.norm(F,'fro')
+    F = F / np.linalg.norm(F,'fro')
     
     return F 
