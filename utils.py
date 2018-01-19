@@ -1,3 +1,8 @@
+import cv2 
+import numpy as np 
+from itertools import izip 
+import matplotlib.pyplot as plt 
+
 def pts2ply(pts,filename='out.ply'): 
     f = open(filename,'w')
     f.write('ply\n')
@@ -18,34 +23,31 @@ def pts2ply(pts,filename='out.ply'):
         f.write('{} {} {} 255 255 255\n'.format(pt[0],pt[1],pt[2]))
     f.close()
 
-import cv2 
-import numpy as np 
-
-def drawlines(img1,img2,lines,pts1,pts2,drawOnly=None):
+def drawlines(img1,img2,lines,pts1,pts2,drawOnly=None,linesize=3,circlesize=10):
     ''' img1 - image on which we draw the epilines for the points in img2
         lines - corresponding epilines '''
-    img1,img2 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY),cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
-    r,c = img1.shape
-    img1 = cv2.cvtColor(img1,cv2.COLOR_GRAY2BGR)
-    img2 = cv2.cvtColor(img2,cv2.COLOR_GRAY2BGR)
-    
-    drawOnly = pts1.shape[0] if (drawOnly is None) else drawOnly
+    r,c = img1.shape[:-1]
+
+    img1_, img2_ = np.copy(img1), np.copy(img2)
+
+    drawOnly = lines.shape[0] if (drawOnly is None) else drawOnly
+
     i = 0 
-    
     for r,pt1,pt2 in zip(lines,pts1,pts2):
         color = tuple(np.random.randint(0,255,3).tolist())
         x0,y0 = map(int, [0, -r[2]/r[1] ])
         x1,y1 = map(int, [c, -(r[2]+r[0]*c)/r[1] ])
-        img1 = cv2.line(img1, (x0,y0), (x1,y1), color,2)
         
-        img1 = cv2.circle(img1,tuple(pt1.astype(int)),5,color,-1)
-        img2 = cv2.circle(img2,tuple(pt2.astype(int)),5,color,-1)
-        
+        img1_ = cv2.line(img1_, (x0,y0), (x1,y1), color,linesize)
+        img1_ = cv2.circle(img1_,tuple(pt1.astype(int)),circlesize,color,-1)
+        img2_ = cv2.circle(img2_,tuple(pt2.astype(int)),circlesize,color,-1)
+
         i += 1 
-        if i >= drawOnly: 
+        
+        if i > drawOnly: 
             break 
-            
-    return img1,img2
+
+    return img1_,img2_
 
 def GetEpipair(F, pts1, pts2,drawOnly=None):
     lines1 = cv2.computeCorrespondEpilines(pts2.reshape(-1,1,2), 2,F)
@@ -85,7 +87,6 @@ def GetFundamentalMatrix(img1,img2):
                                param1=.1, param2=.99)
     return F, mask, img1pts, img2pts
 
-from itertools import izip 
 def DrawMatchesCustom(img1,img2,kp1,kp2,F,drawOnly=None): 
     fig,ax=plt.subplots(ncols=2,figsize=(11,4))
     ax[0].imshow(img1)
@@ -110,4 +111,3 @@ def DrawMatchesCustom(img1,img2,kp1,kp2,F,drawOnly=None):
         i += 1
         if i > drawOnly: 
             break 
-            
