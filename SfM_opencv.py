@@ -2,15 +2,21 @@ import cv2
 import numpy as np 
 from utils import * 
 
-
 def GetImageMatches(img1,img2):
-    surfer=cv2.xfeatures2d.SIFT_create()
+    surfer=cv2.xfeatures2d.SURF_create()
     kp1, desc1 = surfer.detectAndCompute(img1,None)
     kp2, desc2 = surfer.detectAndCompute(img2,None)
 
     matcher = cv2.BFMatcher(crossCheck=True)
     matches = matcher.match(desc1, desc2)
 
+    matches = sorted(matches, key = lambda x:x.distance)
+
+    return kp1,desc1,kp2,desc2,matches
+
+def GetAlignedMatches(kp1,desc1,kp2,desc2,matches):
+
+    #Sorting in case matches array isn't already sorted
     matches = sorted(matches, key = lambda x:x.distance)
 
     #retrieving corresponding indices of keypoints (in both images) from matches.  
@@ -25,7 +31,7 @@ def GetImageMatches(img1,img2):
     img1pts = np.array([kp.pt for kp in kp1_])
     img2pts = np.array([kp.pt for kp in kp2_])
 
-    return img1pts,img2pts,matches
+    return img1pts,img2pts
 
 def GetFundamentalMatrix(img1pts,img2pts,outlierThres=.1,prob=.99): 
     F,mask=cv2.findFundamentalMat(img1pts,img2pts,method=cv2.FM_RANSAC,param1=outlierThres,param2=prob)
