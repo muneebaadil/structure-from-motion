@@ -52,16 +52,38 @@ def EstimateFundamentalMatrixNormalized(x1,x2):
     return F
 
 def EstimateFundamentalMatrixRANSAC(img1pts,img2pts,outlierThres,prob=None,iters=None): 
-    
+    if img1pts.shape[1]==2: #converting to homogenous coordinates if not already
+        img1pts = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
+        img2pts = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
+
     Fs = np.zeros((iters,3,3))
+    bestInliers, bestF, bestmask = 0, None, None
+
     for i in xrange(iters): 
         mask = np.random.randint(low=0,high=img1pts.shape[0],size=(8,))
         
         img1ptsiter = img1pts[mask]
         img2ptsiter = img2pts[mask]
-        Fs[i,:,:] = sfmnp.EstimateFundamentalMatrix(img1ptsiter,img2ptsiter)
+        Fiter = EstimateFundamentalMatrix(img1ptsiter,img2ptsiter)
         
-        #if i%50==0:
-        #    print '{}/{} iters done..'.format(i,iters)
+        err = SampsonError(Fiter,img1pts,img2pts)
+        mask = err < outlierThres
+        numInliers = np.sum(mask)
+
+        if bestInliers < numInliers: 
+            bestInliers = numInliers
+            bestF = Fiter
+            bestmask = mask
+
+        if i%5000==0: 
+            print '{}/{} iterations done'.format(i,iters)
         
-    return Fs 
+    return bestF, bestmask
+
+def SampsonError(F,x1,x2): 
+    num = np.sum(x1.dot(F) * x2,axis=-1)
+    Fx1 = x1.dot(F)
+    Fx2 = F.dot(x2.T).T
+    denum = Fx1[:,0]**2 + Fx1[:,1]**2 + Fx2[:,0]**2 + Fx2[:,1]**2
+    err = num**2/denum
+    return err
