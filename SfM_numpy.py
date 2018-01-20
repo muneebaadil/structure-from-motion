@@ -50,3 +50,18 @@ def EstimateFundamentalMatrixNormalized(x1,x2):
 
     F = T1.T.dot(F.dot(T2))
     return F
+
+def EstimateFundamentalMatrixRANSAC(img1pts,img2pts,outlierThres,prob=None,iters=None): 
+    
+    Fs = np.zeros((iters,3,3))
+    for i in xrange(iters): 
+        mask = np.random.randint(low=0,high=img1pts.shape[0],size=(8,))
+        
+        img1ptsiter = img1pts[mask]
+        img2ptsiter = img2pts[mask]
+        Fs[i,:,:] = sfmnp.EstimateFundamentalMatrix(img1ptsiter,img2ptsiter)
+        
+        #if i%50==0:
+        #    print '{}/{} iters done..'.format(i,iters)
+        
+    return Fs 
