@@ -52,24 +52,27 @@ def EstimateFundamentalMatrixNormalized(x1,x2):
     return F
 
 def EstimateFundamentalMatrixRANSAC(img1pts,img2pts,outlierThres,prob=None,iters=None): 
-    if img1pts.shape[1]==2: #converting to homogenous coordinates if not already
+    if img1pts.shape[1]==2: 
+        #converting to homogenous coordinates if not already
         img1pts = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
         img2pts = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
 
-    Fs = np.zeros((iters,3,3))
     bestInliers, bestF, bestmask = 0, None, None
 
     for i in xrange(iters): 
-        mask = np.random.randint(low=0,high=img1pts.shape[0],size=(8,))
         
+        #Selecting 8 random points
+        mask = np.random.randint(low=0,high=img1pts.shape[0],size=(8,))
         img1ptsiter = img1pts[mask]
         img2ptsiter = img2pts[mask]
+
+        #Fitting fundamental matrix and evaluating error 
         Fiter = EstimateFundamentalMatrix(img1ptsiter,img2ptsiter)
-        
         err = SampsonError(Fiter,img1pts,img2pts)
         mask = err < outlierThres
         numInliers = np.sum(mask)
 
+        #Updating best measurements if appropriate 
         if bestInliers < numInliers: 
             bestInliers = numInliers
             bestF = Fiter
@@ -78,13 +81,18 @@ def EstimateFundamentalMatrixRANSAC(img1pts,img2pts,outlierThres,prob=None,iters
         if i%5000==0: 
             print '{}/{} iterations done'.format(i,iters)
 
+    #Final least squares fit on all inliers found.. 
     F = EstimateFundamentalMatrix(img1pts[bestmask], img2pts[bestmask])    
+    
     return F, bestmask
 
 def SampsonError(F,x1,x2): 
     num = np.sum(x1.dot(F) * x2,axis=-1)
-    Fx1 = x1.dot(F)
-    Fx2 = F.dot(x2.T).T
-    denum = Fx1[:,0]**2 + Fx1[:,1]**2 + Fx2[:,0]**2 + Fx2[:,1]**2
-    err = num**2/denum
-    return err
+
+    F_src = np.dot(F, x1.T)
+    Ft_dst = np.dot(F.T, x2.T)
+
+    dst_F_src = np.sum(x2 * F_src.T, axis=1)
+    
+    return np.abs(dst_F_src) / np.sqrt(F_src[0] ** 2 + 
+    F_src[1] ** 2 + Ft_dst[0] ** 2 + Ft_dst[1] ** 2)
