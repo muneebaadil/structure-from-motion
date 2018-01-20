@@ -77,8 +77,9 @@ def EstimateFundamentalMatrixRANSAC(img1pts,img2pts,outlierThres,prob=None,iters
 
         if i%5000==0: 
             print '{}/{} iterations done'.format(i,iters)
-        
-    return bestF, bestmask
+
+    F = EstimateFundamentalMatrix(img1pts[bestmask], img2pts[bestmask])    
+    return F, bestmask
 
 def SampsonError(F,x1,x2): 
     num = np.sum(x1.dot(F) * x2,axis=-1)
