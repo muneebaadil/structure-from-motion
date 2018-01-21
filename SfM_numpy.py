@@ -110,3 +110,15 @@ def SampsonError(F,x1,x2):
     
     return np.abs(dst_F_src) / np.sqrt(F_src[0] ** 2 + 
     F_src[1] ** 2 + Ft_dst[0] ** 2 + Ft_dst[1] ** 2)
+
+def ExtractCameraPoses(E): 
+    u,d,v = np.linalg.svd(E)
+    W = np.array([[0,-1,0],[1,0,0],[0,0,1]])
+    
+    Rs, Cs = np.zeros((4,3,3)), np.zeros((4,3))
+    
+    t = u[:,-1]
+    R1 = u.dot(W.dot(v))
+    R2 = u.dot(W.T.dot(v))
+    
+    return R1,R2,t
