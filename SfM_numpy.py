@@ -20,7 +20,7 @@ def EstimateFundamentalMatrix(x1,x2):
     u,s,v = np.linalg.svd(F)
     F = u.dot(np.diag(s).dot(v))
 
-    F = F / np.linalg.norm(F,'fro')
+    F = F / F[-1,-1]
     
     return F 
 
@@ -77,9 +77,6 @@ def EstimateFundamentalMatrixRANSAC(img1pts,img2pts,outlierThres,prob=None,iters
             bestInliers = numInliers
             bestF = Fiter
             bestmask = mask
-
-        if i%5000==0: 
-            print '{}/{} iterations done'.format(i,iters)
 
     #Final least squares fit on all inliers found.. 
     F = EstimateFundamentalMatrix(img1pts[bestmask], img2pts[bestmask])    
