@@ -83,6 +83,23 @@ def EstimateFundamentalMatrixRANSAC(img1pts,img2pts,outlierThres,prob=None,iters
     
     return F, bestmask
 
+def ComputeEpiline(pts, index, F): 
+    """
+    pts: (n,3) points matrix
+    
+    lines: (n,3) lines matrix"""
+    
+    if pts.shape[1]==2: 
+        #converting to homogenous coordinates if not already
+        pts = cv2.convertPointsToHomogeneous(pts)[:,0,:]
+        
+    if index==1: 
+        lines = F.dot(pts.T) 
+    elif index==2: 
+        lines = F.T.dot(pts.T)
+    
+    return lines.T
+
 def SampsonError(F,x1,x2): 
     num = np.sum(x1.dot(F) * x2,axis=-1)
 
