@@ -137,3 +137,15 @@ def CountFrontOfBothCameras(X, R, t):
     isfrontcam2 = TransformCoordPts(X,R,t)[:,-1] > 0
     
     return np.sum(isfrontcam1 & isfrontcam2)
+
+def DisambiguateCameraPose(configSet):  
+    maxfrontpts = -1 
+    
+    for R,t,pts3d in configSet: 
+        count = sfmnp.CountFrontOfBothCameras(pts3d,R,t)
+        
+        if count > maxfrontpts: 
+            maxfrontpts = count
+            bestR,bestt = R,t
+    
+    return bestR,bestt,maxfrontpts
