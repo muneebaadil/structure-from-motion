@@ -149,3 +149,23 @@ def DisambiguateCameraPose(configSet):
             bestR,bestt = R,t
     
     return bestR,bestt,maxfrontpts
+
+def TriangulatePts(img1pts,img2pts,P1,P2): 
+    if img1pts.shape[1]==2: 
+        #converting to homogenous coordinates if not already
+        img1pts = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
+        img2pts = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]    
+    
+    A = []
+    out = np.zeros((img1pts.shape[0],4))
+    
+    for i,(img1pt, img2pt) in enumerate(izip(img1pts,img2pts)): 
+        img1pt_cross, img2pt_cross = Vec2Skew(img1pt), Vec2Skew(img2pt)
+        
+        A.append(img1pt_cross.dot(P1))
+        A.append(img2pt_cross.dot(P2))
+        A = np.concatenate(A,axis=0)
+        
+        u,s,v = np.linalg.svd(A)
+        out[i,:] = v[-1,:]
+    return out 
