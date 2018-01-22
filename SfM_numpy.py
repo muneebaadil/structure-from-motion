@@ -122,3 +122,6 @@ def ExtractCameraPoses(E):
     R2 = u.dot(W.T.dot(v))
     
     return R1,R2,t
+
+def TransformCoordPts(X,R,t): 
+    return (R.dot(X.T)+t).T
