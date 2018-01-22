@@ -120,8 +120,20 @@ def ExtractCameraPoses(E):
     t = u[:,-1]
     R1 = u.dot(W.dot(v))
     R2 = u.dot(W.T.dot(v))
+
+    if np.linalg.det(R1) < 0: 
+        R1 = R1 * -1
+
+    if np.linalg.det(R2) < 0: 
+        R2 = R2 * -1
     
     return R1,R2,t
 
 def TransformCoordPts(X,R,t): 
     return (R.dot(X.T)+t).T
+
+def CountFrontOfBothCameras(X, R, t): 
+    isfrontcam1 = X[:,-1] > 0
+    isfrontcam2 = TransformCoordPts(X,R,t)[:,-1] > 0
+    
+    return np.sum(isfrontcam1 & isfrontcam2)
