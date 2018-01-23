@@ -2,6 +2,7 @@ import cv2
 import numpy as np 
 from itertools import izip 
 import matplotlib.pyplot as plt 
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 def pts2ply(pts,filename='out.ply'): 
     f = open(filename,'w')
@@ -116,11 +117,11 @@ def PlotCamera(R,t,ax,scale=.5,depth=.5):
     C = -t #camera center (in world coordinate system)
     
     #plotting x-axis of camera coordinate system (red line)
-    ax.plot3D(xs=[t[0],R[0,0]+t[0]],ys=[t[1],R[1,0]+t[1]],zs=[t[2],R[2,0]++t[2]],c='r')
+    ax.plot3D(xs=[C[0],R[0,0]+C[0]],ys=[C[1],R[1,0]+C[1]],zs=[C[2],R[2,0]+C[2]],c='r')
     #plotting y-axis of camera coordinate system (green line)
-    ax.plot3D(xs=[t[0],R[0,1]+t[0]],ys=[t[1],R[1,1]+t[1]],zs=[t[2],R[2,1]+t[2]],c='g')
+    ax.plot3D(xs=[C[0],R[0,1]+C[0]],ys=[C[1],R[1,1]+C[1]],zs=[C[2],R[2,1]+C[2]],c='g')
     #plotting z-axis of camera coordinate system (blue line)
-    ax.plot3D(xs=[t[0],R[0,2]+t[0]],ys=[t[1],R[1,2]+t[1]],zs=[t[2],R[2,2]+t[2]],c='b')
+    ax.plot3D(xs=[C[0],R[0,2]+C[0]],ys=[C[1],R[1,2]+C[1]],zs=[C[2],R[2,2]+C[2]],c='b')
     
     #generating 5 corners of camera polygon 
     pt1 = np.array([[0,0,0]]).T #camera centre
@@ -131,7 +132,7 @@ def PlotCamera(R,t,ax,scale=.5,depth=.5):
     pts = np.concatenate((pt1,pt2,pt3,pt4,pt5),axis=-1)
     
     #Transforming to world-coordinate system
-    pts = R.dot(pts)+t[:,np.newaxis]
+    pts = R.dot(pts)+C[:,np.newaxis]
     ax.scatter3D(xs=pts[0,:],ys=pts[1,:],zs=pts[2,:],c='k')
     
     #Generating a list of vertices to be connected in polygon
