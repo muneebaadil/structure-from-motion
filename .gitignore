@@ -3,3 +3,4 @@ data/
 *.ipynb
 *.pyc
 *.ply
+!SfM_demo.ipynb
