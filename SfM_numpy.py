@@ -1,5 +1,6 @@
 import numpy as np 
 import cv2 
+from itertools import izip
 
 def EstimateFundamentalMatrix(x1,x2):
     if x1.shape[1]==2: #converting to homogenous coordinates if not already
@@ -142,7 +143,7 @@ def DisambiguateCameraPose(configSet):
     maxfrontpts = -1 
     
     for R,t,pts3d in configSet: 
-        count = sfmnp.CountFrontOfBothCameras(pts3d,R,t)
+        count = CountFrontOfBothCameras(pts3d,R,t)
         
         if count > maxfrontpts: 
             maxfrontpts = count
@@ -150,22 +151,44 @@ def DisambiguateCameraPose(configSet):
     
     return bestR,bestt,maxfrontpts
 
-def TriangulatePts(img1pts,img2pts,P1,P2): 
+def Triangulate(P1,P2,img1pts,img2pts): 
+    
+    img1pts,img2pts = img1pts.T, img2pts.T
     if img1pts.shape[1]==2: 
         #converting to homogenous coordinates if not already
         img1pts = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
         img2pts = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]    
     
-    A = []
     out = np.zeros((img1pts.shape[0],4))
     
     for i,(img1pt, img2pt) in enumerate(izip(img1pts,img2pts)): 
         img1pt_cross, img2pt_cross = Vec2Skew(img1pt), Vec2Skew(img2pt)
         
+        A = []
         A.append(img1pt_cross.dot(P1))
         A.append(img2pt_cross.dot(P2))
+        
         A = np.concatenate(A,axis=0)
         
         u,s,v = np.linalg.svd(A)
         out[i,:] = v[-1,:]
-    return out 
+        
+    return out.T 
+
+def Vec2Skew(vec): 
+    return np.array([[0,-vec[2],vec[1]],[vec[2],0,-vec[0]],[-vec[1],vec[0],0]])
+
+def GetTriangulatedPts(img1pts,img2pts,K,R,t,triangulateFunc): 
+    img1ptsHom = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
+    img2ptsHom = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
+
+    img1ptsNorm = (np.linalg.inv(K).dot(img1ptsHom.T)).T
+    img2ptsNorm = (np.linalg.inv(K).dot(img2ptsHom.T)).T
+
+    img1ptsNorm = cv2.convertPointsFromHomogeneous(img1ptsNorm)[:,0,:]
+    img2ptsNorm = cv2.convertPointsFromHomogeneous(img2ptsNorm)[:,0,:]
+    
+    pts4d = triangulateFunc(np.eye(3,4),np.hstack((R,t)),img1ptsNorm.T,img2ptsNorm.T)
+    pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
+    
+    return pts3d
