@@ -111,3 +111,33 @@ def DrawMatchesCustom(img1,img2,kp1,kp2,F,drawOnly=None):
         i += 1
         if i > drawOnly: 
             break 
+
+def PlotCamera(R,t,ax,scale=.5,depth=.5):
+    C = -t #camera center (in world coordinate system)
+    
+    #plotting x-axis of camera coordinate system (red line)
+    ax.plot3D(xs=[t[0],R[0,0]+t[0]],ys=[t[1],R[1,0]+t[1]],zs=[t[2],R[2,0]++t[2]],c='r')
+    #plotting y-axis of camera coordinate system (green line)
+    ax.plot3D(xs=[t[0],R[0,1]+t[0]],ys=[t[1],R[1,1]+t[1]],zs=[t[2],R[2,1]+t[2]],c='g')
+    #plotting z-axis of camera coordinate system (blue line)
+    ax.plot3D(xs=[t[0],R[0,2]+t[0]],ys=[t[1],R[1,2]+t[1]],zs=[t[2],R[2,2]+t[2]],c='b')
+    
+    #generating 5 corners of camera polygon 
+    pt1 = np.array([[0,0,0]]).T #camera centre
+    pt2 = np.array([[scale,-scale,depth]]).T #upper right 
+    pt3 = np.array([[scale,scale,depth]]).T #lower right 
+    pt4 = np.array([[-scale,-scale,depth]]).T #upper left
+    pt5 = np.array([[-scale,scale,depth]]).T #lower left
+    pts = np.concatenate((pt1,pt2,pt3,pt4,pt5),axis=-1)
+    
+    #Transforming to world-coordinate system
+    pts = R.dot(pts)+t[:,np.newaxis]
+    ax.scatter3D(xs=pts[0,:],ys=pts[1,:],zs=pts[2,:],c='k')
+    
+    #Generating a list of vertices to be connected in polygon
+    verts = [[pts[:,0],pts[:,1],pts[:,2]], [pts[:,0],pts[:,2],pts[:,-1]],
+            [pts[:,0],pts[:,-1],pts[:,-2]],[pts[:,0],pts[:,-2],pts[:,1]]]
+    
+    #Generating a polygon now..
+    ax.add_collection3d(Poly3DCollection(verts, facecolors='grey',
+                                         linewidths=1, edgecolors='k', alpha=.25))
