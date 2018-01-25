@@ -192,3 +192,23 @@ def GetTriangulatedPts(img1pts,img2pts,K,R,t,triangulateFunc):
     pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
     
     return pts3d
+
+def ComputeReprojections(X,R,t,K): 
+    """
+    X: (n,3) 3D triangulated point in world coordinate system
+    R: (3,3) Rotation Matrix to convert from world to camera coordinate system
+    t: (3,1) Translation vector (from camera's origin to world's origin)
+    K: (3,3) Camera calibration matrix
+    
+    out: (n,2) Projected points into image plane"""
+    outh = K.dot(R.dot(X.T) + t )
+    out = cv2.convertPointsFromHomogeneous(outh.T)[:,0,:]
+    return out 
+
+def ComputeReprojectionError(x2d, x2dreproj): 
+    """
+    x2d: (n,2) Ground truth indices of SIFT features
+    x2dreproj: (n,2) Reprojected indices of triangulated points of SIFT features
+    
+    out: (scalar) Mean reprojection error of points"""
+    return np.mean(np.sqrt(np.sum((x2d-x2dreproj)**2,axis=-1)))
