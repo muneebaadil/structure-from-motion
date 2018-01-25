@@ -71,18 +71,6 @@ def GetFundamentalMatrix(img1,img2):
 
     img1pts = np.array([kp1[m.queryIdx].pt for m in matches])
     img2pts = np.array([kp2[m.trainIdx].pt for m in matches])
-    
-    #retrieving corresponding indices of keypoints (in both images) from matches.  
-    #img1idx = np.array([m.queryIdx for m in matches])
-    #img2idx = np.array([m.trainIdx for m in matches])
-
-    #filtering out the keypoints that were NOT matched. 
-    #kp1_ = (np.array(kp1))[img1idx]
-    #kp2_ = (np.array(kp2))[img2idx]
-
-    #retreiving the image coordinates of matched keypoints
-    #img1pts = np.array([kp.pt for kp in kp1_])
-    #img2pts = np.array([kp.pt for kp in kp2_])
 
     F,mask = cv2.findFundamentalMat(img1pts, img2pts, method=cv2.FM_RANSAC,
                                param1=.1, param2=.99)
@@ -142,3 +130,14 @@ def PlotCamera(R,t,ax,scale=.5,depth=.5):
     #Generating a polygon now..
     ax.add_collection3d(Poly3DCollection(verts, facecolors='grey',
                                          linewidths=1, edgecolors='k', alpha=.25))
+
+def DrawCorrespondences(img, ptsTrue, ptsReproj, ax, drawOnly=50): 
+    ax.imshow(img)
+    
+    randidx = np.random.choice(ptsTrue.shape[0],size=(drawOnly,),replace=False)
+    ptsTrue_, ptsReproj_ = ptsTrue[randidx], ptsReproj[randidx]
+    
+    colors = colors=np.random.rand(drawOnly,3)
+    
+    ax.scatter(ptsTrue_[:,0],ptsTrue_[:,1],marker='x',c=colors)
+    ax.scatter(ptsReproj_[:,0],ptsReproj_[:,1],marker='.',c=colors)
