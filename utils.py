@@ -101,7 +101,7 @@ def DrawMatchesCustom(img1,img2,kp1,kp2,F,drawOnly=None):
         if i > drawOnly: 
             break 
 
-def PlotCamera(R,t,ax,scale=.5,depth=.5):
+def PlotCamera(R,t,ax,scale=.5,depth=.5,faceColor='grey'):
     C = -t #camera center (in world coordinate system)
 
     #Generating camera coordinate axes
@@ -133,7 +133,7 @@ def PlotCamera(R,t,ax,scale=.5,depth=.5):
             [pts[:,0],pts[:,-1],pts[:,-2]],[pts[:,0],pts[:,-2],pts[:,1]]]
     
     #Generating a polygon now..
-    ax.add_collection3d(Poly3DCollection(verts, facecolors='grey',
+    ax.add_collection3d(Poly3DCollection(verts, facecolors=faceColor,
                                          linewidths=1, edgecolors='k', alpha=.25))
 
 def DrawCorrespondences(img, ptsTrue, ptsReproj, ax, drawOnly=50): 
