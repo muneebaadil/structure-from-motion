@@ -31,7 +31,27 @@ def GetAlignedMatches(kp1,desc1,kp2,desc2,matches):
     img1pts = np.array([kp.pt for kp in kp1_])
     img2pts = np.array([kp.pt for kp in kp2_])
 
-    return img1pts,img2pts
+    return img1pts,img2pts,img1idx,img2idx
+
+def Find2D3DMatches(desc1,img1idx,desc2,img2idx,desc3,kp3,mask,pts3d):
+    #Picking only those descriptors for which 3D point is available
+    desc1_3D = desc1[img1idx][mask]
+    desc2_3D = desc2[img2idx][mask]
+
+    matcher = cv2.BFMatcher(crossCheck=True)
+    matches = matcher.match(desc3, np.concatenate((desc1_3D,desc2_3D),axis=0))
+
+    #Filtering out matched 2D keypoints from new view 
+    img3idx = np.array([m.queryIdx for m in matches])
+    kp3_ = (np.array(kp3))[img3idx]
+    img3pts = np.array([kp.pt for kp in kp3_])
+
+    #Filtering out matched 3D already triangulated points 
+    pts3didx = np.array([m.trainIdx for m in matches])
+    pts3didx[pts3didx >= pts3d.shape[0]] = pts3didx[pts3didx >= pts3d.shape[0]] - pts3d.shape[0]
+    pts3d_ = pts3d[pts3didx]
+
+    return img3pts, pts3d_
 
 def GetFundamentalMatrix(img1pts,img2pts,outlierThres=.1,prob=.99): 
     F,mask=cv2.findFundamentalMat(img1pts,img2pts,method=cv2.FM_RANSAC,param1=outlierThres,param2=prob)
