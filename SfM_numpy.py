@@ -178,7 +178,13 @@ def Triangulate(P1,P2,img1pts,img2pts):
 def Vec2Skew(vec): 
     return np.array([[0,-vec[2],vec[1]],[vec[2],0,-vec[0]],[-vec[1],vec[0],0]])
 
-def GetTriangulatedPts(img1pts,img2pts,K,R,t,triangulateFunc): 
+def GetTriangulatedPts(img1pts,img2pts,K,R,t,triangulateFunc,Rbase=None,tbase=None):
+
+    if Rbase is None: 
+        Rbase = np.eye((3,3)) 
+    if tbase is None: 
+        tbase = np.zeros((3,1))
+
     img1ptsHom = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
     img2ptsHom = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
 
@@ -188,7 +194,7 @@ def GetTriangulatedPts(img1pts,img2pts,K,R,t,triangulateFunc):
     img1ptsNorm = cv2.convertPointsFromHomogeneous(img1ptsNorm)[:,0,:]
     img2ptsNorm = cv2.convertPointsFromHomogeneous(img2ptsNorm)[:,0,:]
     
-    pts4d = triangulateFunc(np.eye(3,4),np.hstack((R,t)),img1ptsNorm.T,img2ptsNorm.T)
+    pts4d = triangulateFunc(np.hstack((Rbase,tbase)),np.hstack((R,t)),img1ptsNorm.T,img2ptsNorm.T)
     pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
     
     return pts3d
