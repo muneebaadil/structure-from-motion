@@ -220,17 +220,21 @@ def ComputeReprojectionError(x2d, x2dreproj):
     return np.mean(np.sqrt(np.sum((x2d-x2dreproj)**2,axis=-1)))
     
 
-def LinearPnP(X, x, K): 
-    xh = np.hstack((x, np.ones((x.shape[0],1))))
-    Xh = np.hstack((X, np.ones((X.shape[0],1))))
-    xc = np.linalg.inv(K).dot(xh.T).T
+def LinearPnP(X, x, K, isNormalized=False): 
+    if X.shape[1]==3:
+        X = np.hstack((X, np.ones((X.shape[0],1))))
+    if x.shape[1]==2: 
+        x = np.hstack((x, np.ones((x.shape[0],1))))
+
+    if isNormalized==False: 
+        x = np.linalg.inv(K).dot(x.T).T
 
     A = np.zeros((X.shape[0]*3,12))
 
     for i in xrange(X.shape[0]): 
-        A[i*3,:] = np.concatenate((np.zeros((4,)), -Xh[i,:], xc[i,1]*Xh[i,:]))
-        A[i*3+1,:] = np.concatenate((Xh[i,:], np.zeros((4,)), -xc[i,0]*Xh[i,:]))
-        A[i*3+2,:] = np.concatenate((-xc[i,1]*Xh[i,:], xc[i,0]*Xh[i,:], np.zeros((4,))))    
+        A[i*3,:] = np.concatenate((np.zeros((4,)), -X[i,:], x[i,1]*X[i,:]))
+        A[i*3+1,:] = np.concatenate((X[i,:], np.zeros((4,)), -x[i,0]*X[i,:]))
+        A[i*3+2,:] = np.concatenate((-x[i,1]*X[i,:], x[i,0]*X[i,:], np.zeros((4,))))    
     
     u,s,v = np.linalg.svd(A)
     P = v[-1,:].reshape((4,3),order='F').T
@@ -243,7 +247,41 @@ def LinearPnP(X, x, K):
     if np.linalg.det(u.dot(v)) < 0:
         R = R*-1
         t = t*-1
-
-    C = -R.T.dot(t)
     
     return R, t
+
+def LinearPnPRansac(X,x,K,outlierThres,iters): 
+
+    if X.shape[1]==3:
+        X = np.hstack((X, np.ones((X.shape[0],1))))
+    if x.shape[1]==2: 
+        x = np.hstack((x, np.ones((x.shape[0],1))))
+
+    x = np.linalg.inv(K).dot(x.T).T
+
+    bestR,bestt,bestmask,bestInlierCount = None,None,None,0
+
+    for i in xrange(iters): 
+
+        #Randomly selecting 6 points for linear pnp
+        mask = np.random.randint(low=0,high=X.shape[0],size=(6,))
+        Xiter = X[mask]
+        xiter = x[mask]
+
+        #Estimating pose and evaluating (reprojection error)
+        Riter,titer = LinearPnP(Xiter,xiter,K,isNormalized=True)
+
+        xreproj = ComputeReprojections(Xiter[:,:3], Riter, titer[:,np.newaxis], K)        
+        errs = np.sqrt(np.sum((cv2.convertPointsFromHomogeneous(xiter)[:,0,:]-xreproj)**2,axis=-1))
+
+        mask = errs < outlierThres
+        numInliers = np.sum(mask)
+
+        #updating best parameters if appropriate
+        if numInliers > bestInlierCount: 
+            bestInlierCount = numInliers
+            bestR,bestt,bestmask = Riter,titer, mask
+
+    #Final least squares fit on best mask
+    R,t = LinearPnP(X[bestmask],x[bestmask],K,isNormalized=True)
+    return R,t,bestmask
