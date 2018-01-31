@@ -252,12 +252,10 @@ def LinearPnP(X, x, K, isNormalized=False):
 
 def LinearPnPRansac(X,x,K,outlierThres,iters): 
 
-    if X.shape[1]==3:
-        X = np.hstack((X, np.ones((X.shape[0],1))))
-    if x.shape[1]==2: 
-        x = np.hstack((x, np.ones((x.shape[0],1))))
-
-    x = np.linalg.inv(K).dot(x.T).T
+    # if X.shape[1]==3:
+    #     X = np.hstack((X, np.ones((X.shape[0],1))))
+    # if x.shape[1]==2: 
+    #     x = np.hstack((x, np.ones((x.shape[0],1))))
 
     bestR,bestt,bestmask,bestInlierCount = None,None,None,0
 
@@ -269,10 +267,10 @@ def LinearPnPRansac(X,x,K,outlierThres,iters):
         xiter = x[mask]
 
         #Estimating pose and evaluating (reprojection error)
-        Riter,titer = LinearPnP(Xiter,xiter,K,isNormalized=True)
+        Riter,titer = LinearPnP(Xiter,xiter,K,isNormalized=False)
 
-        xreproj = ComputeReprojections(Xiter[:,:3], Riter, titer[:,np.newaxis], K)        
-        errs = np.sqrt(np.sum((cv2.convertPointsFromHomogeneous(xiter)[:,0,:]-xreproj)**2,axis=-1))
+        xreproj = ComputeReprojections(X, Riter, titer[:,np.newaxis], K)        
+        errs = np.sqrt(np.sum((x-xreproj)**2,axis=-1))
 
         mask = errs < outlierThres
         numInliers = np.sum(mask)
@@ -283,5 +281,5 @@ def LinearPnPRansac(X,x,K,outlierThres,iters):
             bestR,bestt,bestmask = Riter,titer, mask
 
     #Final least squares fit on best mask
-    R,t = LinearPnP(X[bestmask],x[bestmask],K,isNormalized=True)
+    R,t = LinearPnP(X[bestmask],x[bestmask],K,isNormalized=False)
     return R,t,bestmask
