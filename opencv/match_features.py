@@ -49,8 +49,11 @@ def main(opts):
             break 
         break 
 
-    #with open(os.path.join(opts.outDir, 'matches.pkl'), 'wb') as fileobj: 
-    #    pkl.dump(out, fileobj)
+    #Serealizing matches dictionary so it can be saved using pickle..
+    out_ = SerializeMatchesDict(out)
+    
+    with open(os.path.join(opts.outDir, 'matches.pkl'), 'wb') as fileobj: 
+        pkl.dump(out_, fileobj)
     return 
 
 def SetArguments(parser): 
