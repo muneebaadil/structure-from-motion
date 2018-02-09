@@ -70,3 +70,35 @@ def DeserializeMatchesDict(matches):
             temp.append(cv2.DMatch(match[0],match[1],match[2],match[3]))
         out[k] = temp 
     return out
+
+def GetAlignedMatches(kp1,desc1,kp2,desc2,matches):
+    """Aligns the keypoints so that a row of first keypoints corresponds to the same row 
+    of another keypoints
+    
+    Args: 
+    kp1: List of keypoints from first (left) image
+    desc1: List of desciptros from first (left) image
+    kp2: List of keypoints from second (right) image
+    desc2: List of desciptros from second (right) image
+    matches: List of matches object
+    
+    Returns: 
+    img1pts, img2pts: (n,2) array where img1pts[i] corresponds to img2pts[i] 
+    """
+
+    #Sorting in case matches array isn't already sorted
+    matches = sorted(matches, key = lambda x:x.distance)
+
+    #retrieving corresponding indices of keypoints (in both images) from matches.  
+    img1idx = np.array([m.queryIdx for m in matches])
+    img2idx = np.array([m.trainIdx for m in matches])
+
+    #filtering out the keypoints that were NOT matched. 
+    kp1_ = (np.array(kp1))[img1idx]
+    kp2_ = (np.array(kp2))[img2idx]
+
+    #retreiving the image coordinates of matched keypoints
+    img1pts = np.array([kp.pt for kp in kp1_])
+    img2pts = np.array([kp.pt for kp in kp2_])
+
+    return img1pts,img2pts
