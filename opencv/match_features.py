@@ -1,9 +1,7 @@
-import numpy as np
-import argparse
-import os
-import cv2 
-import pickle as pkl
+import cv2, numpy as np
+import argparse, os, pickle as pkl
 from utils import *
+import pdb
 
 def main(opts): 
     #if output path does not exist, creating it..
@@ -45,10 +43,7 @@ def main(opts):
             if numDone%opts.printEvery==0: 
                 n = len(KDpaths)
                 print '{}/{} done..'.format(numDone, (n*(n-1))/2)
-            
-            break 
-        break 
-
+    
     #Serealizing matches dictionary so it can be saved using pickle..
     out_ = SerializeMatchesDict(out)
     
