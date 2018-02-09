@@ -5,8 +5,33 @@ from utils import *
 import pickle as pkl
 import pdb
 
-def main(opts): 
+def GetTriangulatedPts(img1pts,img2pts,K,R,t): 
+    """Triangulates a pair of 2D points into corresponding 3D points
+    
+    Args: 
+    img1pts: (n,2) array of 2D keypoints
+    img2pts: (n,2) array of corresponding 2D keypoints
+    K: (3,3) Camera calibration matrix 
+    R: (3,3) Camera rotation matrix
+    t: (3,1) Camera translation matrix
+    
+    Returns: 
+    out: (n,3) 3D coordinates of n points"""
+    img1ptsHom = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
+    img2ptsHom = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
 
+    img1ptsNorm = (np.linalg.inv(K).dot(img1ptsHom.T)).T
+    img2ptsNorm = (np.linalg.inv(K).dot(img2ptsHom.T)).T
+
+    img1ptsNorm = cv2.convertPointsFromHomogeneous(img1ptsNorm)[:,0,:]
+    img2ptsNorm = cv2.convertPointsFromHomogeneous(img2ptsNorm)[:,0,:]
+
+    pts4d = cv2.triangulatePoints(np.eye(3,4),np.hstack((R,t)),img1ptsNorm.T,img2ptsNorm.T)
+    pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
+
+    return pts3d
+
+def main(opts): 
     #Loading 5th and 6th image data only (hardcoded for now)..
     with open('../data/fountain-P11/images/keypoints_descriptors/0005.pkl') as fileobj: 
         data1 = pkl.load(fileobj)
@@ -20,8 +45,9 @@ def main(opts):
 
     with open('../data/fountain-P11/images/matches/matches.pkl') as fileobj: 
         matches = pkl.load(fileobj)
-        matches = DeserializeMatchesDict(matches)
         matches = matches[('0005.pkl','0006.pkl')]
+        matches = DeserializeMatchesDict(matches)
+        
 
     #pdb.set_trace()
     #2/4. FUNDAMENTAL MATRIX ESTIMATION
@@ -29,18 +55,17 @@ def main(opts):
     F,mask = cv2.findFundamentalMat(img1pts,img2pts,method=cv2.FM_RANSAC,param1=opts.outlierThres,
                                     param2=opts.fundProb)
     
-    
     #3/4. CAMERA POSE ESTIMATION
     K = np.array([[2759.48,0,1520.69],[0,2764.16,1006.81],[0,0,1]]) #hardcoded for now, have to generalize.. 
     E = K.T.dot(F.dot(K))
     retval,R,t,mask2 = cv2.recoverPose(E,img1pts[mask],img2pts[mask],K)
 
     #4/4. TRIANGULATION. 
-    #pts3d=GetTriangulatedPts(img1pts[mask],img2pts[mask],K,R,t)
+    pts3d=GetTriangulatedPts(img1pts[mask],img2pts[mask],K,R,t)
 
-    # #Finally, saving 3d points in .ply format to view in meshlab software
-    # pts2ply(pts3d)
-    pass 
+    #Finally, saving 3d points in .ply format to view in meshlab software
+    pts2ply(pts3d)
+
 
 def SetArguments(parser): 
     parser.add_argument('-dataDir',action='store',type=str,default='../data/fountain-P11/images/keypoints_descriptors',dest='dataDir') 

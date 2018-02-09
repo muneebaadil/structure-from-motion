@@ -103,32 +103,6 @@ def GetAlignedMatches(kp1,desc1,kp2,desc2,matches):
 
     return img1pts,img2pts
 
-def GetTriangulatedPts(img1pts,img2pts,K,R,t): 
-    """Triangulates a pair of 2D points into corresponding 3D points
-    
-    Args: 
-    img1pts: (n,2) array of 2D keypoints
-    img2pts: (n,2) array of corresponding 2D keypoints
-    K: (3,3) Camera calibration matrix 
-    R: (3,3) Camera rotation matrix
-    t: (3,1) Camera translation matrix
-    
-    Returns: 
-    out: (n,3) 3D coordinates of n points"""
-    img1ptsHom = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
-    img2ptsHom = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
-
-    img1ptsNorm = (np.linalg.inv(K).dot(img1ptsHom.T)).T
-    img2ptsNorm = (np.linalg.inv(K).dot(img2ptsHom.T)).T
-
-    img1ptsNorm = cv2.convertPointsFromHomogeneous(img1ptsNorm)[:,0,:]
-    img2ptsNorm = cv2.convertPointsFromHomogeneous(img2ptsNorm)[:,0,:]
-
-    pts4d = cv2.triangulatePoints(np.eye(3,4),np.hstack((R,t)),img1ptsNorm.T,img2ptsNorm.T)
-    pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
-
-    return pts3d
-
 def pts2ply(pts,filename='out.ply'): 
     """Saves an ndarray of 3D coordinates (in meshlab format)"""
 
