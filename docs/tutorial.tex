@@ -1,4 +1,7 @@
 \documentclass{book}
+
+\usepackage{amsmath}% http://ctan.org/pkg/amsmath
+
 \begin{document}
     \chapter{Prerequisites}
         In this chapter, we will discuss essential building blocks needed for SfM (Structure from Motion), or generally speaking, 3D vision.
@@ -9,12 +12,38 @@
         our final pipeline. 
 
         \section{Transformations}
-            \section{2D Transformations}
-                \subsubsection{Scaling}
+            
+            \subsection{2D Transformations} 
+                Given a point $P$ having coordinates $(x,y)^{T}$, basic geometric transformations are as follows:
+                \begin{enumerate}
+                    \item \textbf{Scaling} is used to either shrink or expand an object graphically. Scaling can be obtained by multiplying
+                    the original coordinates $x$ and $y$ with $s_{x}$ and $s_{y}$ respectively, as shown below. $s_{x}$ and $s_{y}$ determines 
+                    the degree of expansion (or compression) in $x$ and $y$ dimension respetively. Scaling factor more than 1 expands the objects 
+                    while scaling factor below one shrinks the objects.
+                    
+                    \begin{equation}
+                        x' = s_{x} \times x \hspace{10mm} y' = s_{y} \times y
+                    \end{equation} 
 
-                \subsubsection{Translation}
+                    We can rewrite the above equations with matrix vector product, as shown below: 
 
-                \subsubsection{Rotation}
+                    \begin{equation}
+                        \begin{bmatrix}
+                            x'\\ 
+                            y'
+                            \end{bmatrix} = \begin{bmatrix}
+                            s_{x} & 0\\ 
+                            0 & s_{y}
+                            \end{bmatrix}
+                            \begin{bmatrix}
+                            x\\ 
+                            y
+                            \end{bmatrix}
+                    \end{equation}
+
+                    \item \textbf{Translation}
+                    \item \textbf{Rotation}
+                \end{enumerate}
 
             \subsection{Homogeneous Coordinates: Vectorizing the Transformations}
                 \subsubsection{Graphical Intepertation}
@@ -24,7 +53,7 @@
             \subsection{3D Transformations}
                 \subsubsection{Translation}
 
-                \subsubsection{Translation}
+                \subsubsection{Rotation}
 
         \section{Camera Models}
             \subsection{Intrinsics Parameters}
