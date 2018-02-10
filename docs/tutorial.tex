@@ -1,6 +1,10 @@
 \documentclass{book}
 
 \usepackage{amsmath}% http://ctan.org/pkg/amsmath
+\usepackage{graphicx}
+\usepackage{subfig}
+\graphicspath{ {figs/} }
+\usepackage[margin=1in]{geometry}
 
 \begin{document}
     \chapter{Prerequisites}
@@ -86,8 +90,24 @@
                             y
                             \end{bmatrix}
                     \end{equation}
-                    
+
+                    Furthermore, the rotation matrix $R$ must satisfy some properties which are explained below: 
+                    \begin{enumerate}
+                        \item $R$ must be an orthogonal matrix i.e $R^{-1} = R^{T}$. 
+                        \item det $R = \pm 1$ (The rotation matrix $R$ is improper if det $R = -1$, and proper if det $R = +1$)
+                    \end{enumerate} 
                 \end{enumerate}
+
+                \begin{figure}[!ht]%
+                    \centering
+                    \subfloat[Scaled]{{\includegraphics[width=4.5cm]{scaled.png} }}%
+                    \qquad
+                    \subfloat[Translation]{{\includegraphics[width=4.5cm]{translated.png} }}%
+                    \qquad
+                    \subfloat[Rotation]{{\includegraphics[width=4.5cm]{rotated.png} }}%
+                    \caption{Transformations}%
+                    \label{fig:triangulation}%
+                \end{figure}
 
             \subsection{Homogeneous Coordinates: Vectorizing the Transformations}
                 \subsubsection{Graphical Intepertation}
