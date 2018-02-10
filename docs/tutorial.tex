@@ -1,19 +1,30 @@
 \documentclass{book}
 \begin{document}
     \chapter{Prerequisites}
-        \section{2D Transformations}
-            \subsection{Scaling}
+        In this chapter, we will discuss essential building blocks needed for SfM (Structure from Motion), or generally speaking, 3D vision.
+        In particular, we will first discuss basic geometric transformations which are widely used in computer graphics. We will see visual
+        effects on geometric entities (triangle, circle etc), when transformed through some basic geometric transformations. Afterwards, we 
+        will assemble transformations in a particular way to form a very basic camera model -- a set of geometric principles that governs the
+        process of projecting 3D world points onto 2D image plane. Lastly, we will discuss some miscellaneous topics that will be used in 
+        our final pipeline. 
 
-            \subsection{Translation}
+        \section{Transformations}
+            \section{2D Transformations}
+                \subsubsection{Scaling}
 
-            \subsection{Rotation}
+                \subsubsection{Translation}
 
-        \section{Homogeneous Coordinates: Vectorizing the Transformations}
-            \subsection{Graphical Intepertation}
+                \subsubsection{Rotation}
 
-            \subsection{Limitation: Scale Ambiguity}
+            \subsection{Homogeneous Coordinates: Vectorizing the Transformations}
+                \subsubsection{Graphical Intepertation}
 
-        \section{3D Transformations}
+                \subsubsection{Limitation: Scale Ambiguity}
+
+            \subsection{3D Transformations}
+                \subsubsection{Translation}
+
+                \subsubsection{Translation}
 
         \section{Camera Models}
             \subsection{Intrinsics Parameters}
@@ -22,9 +33,10 @@
 
             \subsection{Putting it Together}
 
-        \section{Random Sample Consensus (RANSAC)}
+        \section{Miscellaneous}
+            \subsection{Random Sample Consensus (RANSAC)}
         
-        \section{Reviewing the SVD (Singular Value Decomposition)}
+            \subsection{Reviewing the SVD (Singular Value Decomposition)}
 
     \chapter{Epipolar Geometry} 
         \section{Fundamental Matrix}
