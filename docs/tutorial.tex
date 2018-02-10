@@ -17,15 +17,15 @@
                 Given a point $P$ having coordinates $(x,y)^{T}$, basic geometric transformations are as follows:
                 \begin{enumerate}
                     \item \textbf{Scaling} is used to either shrink or expand an object graphically. Scaling can be obtained by multiplying
-                    the original coordinates $x$ and $y$ with $s_{x}$ and $s_{y}$ respectively, as shown below. $s_{x}$ and $s_{y}$ determines 
-                    the degree of expansion (or compression) in $x$ and $y$ dimension respetively. Scaling factor more than 1 expands the objects 
-                    while scaling factor below one shrinks the objects.
+                    the original coordinates $x$ and $y$ with $s_{x}$ and $s_{y}$ respectively, as shown in equation below.
+                    $s_{x}$ and $s_{y}$ determines the degree of expansion (or compression) in $x$ and $y$ dimension respetively. Scaling
+                    factor more than 1 expands the objects while scaling factor below 1 shrinks the objects.
                     
-                    \begin{equation}
+                    \begin{equation} \label{eq_scaleNaive}
                         x' = s_{x} \times x \hspace{10mm} y' = s_{y} \times y
                     \end{equation} 
 
-                    We can rewrite the above equations with matrix vector product, as shown below: 
+                    We can rewrite the above equations in terms of matrix vector product, as shown below: 
 
                     \begin{equation}
                         \begin{bmatrix}
@@ -41,8 +41,52 @@
                             \end{bmatrix}
                     \end{equation}
 
-                    \item \textbf{Translation}
-                    \item \textbf{Rotation}
+                    \item \textbf{Translation} displaces an object to another location. Transformation can be achieved by adding a translation 
+                    factor $t_{x}$ and $t_{y}$ to $x$ and $y$ respectively, as shown in the equation below. $t_{x}$ and $t_{y}$ determines the 
+                    direction and magnitude of displacement in $x$ and $y$ coordinates respectively. 
+
+                    \begin{equation} \label{eq_transNaive}
+                        x' = x + t_{x} \hspace{10mm} y' = y + t_{y}
+                    \end{equation}
+
+                    We can rewrite the above equations in terms of vector algebra, as shown below: 
+
+                    \begin{equation}
+                        \begin{bmatrix}
+                            x'\\ 
+                            y'
+                            \end{bmatrix} = 
+                            \begin{bmatrix}
+                            x\\ 
+                            y
+                            \end{bmatrix} + \begin{bmatrix}
+                            t_{x}\\ 
+                            t_{y}
+                            \end{bmatrix}
+                    \end{equation}
+                    \item \textbf{Rotation} rotates an object at particular angle $\theta$ from its origin, as shown in figure. Mathematically, 
+                    the rotated points $x'$ and $y'$ can be obtained using the equation below: 
+
+                    \begin{equation}
+                        x' = x cos\theta - ysin\theta \hspace{10mm} y' = xsin\theta + ycos\theta
+                    \end{equation}
+
+                    We can rewrite the above equations in terms of matrix vector product, as shown below: 
+
+                    \begin{equation}
+                        \begin{bmatrix}
+                            x'\\ 
+                            y'
+                            \end{bmatrix} = \begin{bmatrix}
+                            cos\theta & sin\theta\\ 
+                            -sin\theta & cos\theta 
+                            \end{bmatrix} 
+                            \begin{bmatrix}
+                            x\\ 
+                            y
+                            \end{bmatrix}
+                    \end{equation}
+                    
                 \end{enumerate}
 
             \subsection{Homogeneous Coordinates: Vectorizing the Transformations}
