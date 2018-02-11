@@ -15,12 +15,26 @@
         process of projecting 3D world points onto 2D image plane. Lastly, we will discuss some miscellaneous topics that will be used in 
         our final pipeline. 
 
-        \section{Transformations}
+        \section{Transformations} \label{sec_2dtrans}
             
             \subsection{2D Transformations} 
                 Given a point $P$ having coordinates $(x,y)^{T}$, basic geometric transformations are as follows:
+
+                \begin{figure}[!ht]%
+                    \centering
+                    \subfloat[Scaled ($s_{x}=1, s_{y}=2$)]{{\includegraphics[width=4.5cm]{scaled.png} }}%
+                    \qquad
+                    \subfloat[Translation ($t_{x}=-3, t_{y}=1$)]{{\includegraphics[width=4.5cm]{translated.png} }}%
+                    \qquad
+                    \subfloat[Rotation ($\theta = 100^{\circ}$)]{{\includegraphics[width=4.5cm]{rotated.png} }}%
+                    \caption{Transformations}%
+                    \label{fig_transformations}%
+                \end{figure}
+
+
                 \begin{enumerate}
-                    \item \textbf{Scaling} is used to either shrink or expand an object graphically. Scaling can be obtained by multiplying
+                    \item \textbf{Scaling} is used to either shrink or expand an object graphically, as shown in figure \ref{fig_transformations}(a).
+                    Scaling can be obtained by multiplying
                     the original coordinates $x$ and $y$ with $s_{x}$ and $s_{y}$ respectively, as shown in equation below.
                     $s_{x}$ and $s_{y}$ determines the degree of expansion (or compression) in $x$ and $y$ dimension respetively. Scaling
                     factor more than 1 expands the objects while scaling factor below 1 shrinks the objects.
@@ -45,7 +59,8 @@
                             \end{bmatrix}
                     \end{equation}
 
-                    \item \textbf{Translation} displaces an object to another location. Transformation can be achieved by adding a translation 
+                    \item \textbf{Translation} displaces an object to another location, as shown in figure \ref{fig_transformations}(b).
+                    Transformation can be achieved by adding a translation 
                     factor $t_{x}$ and $t_{y}$ to $x$ and $y$ respectively, as shown in the equation below. $t_{x}$ and $t_{y}$ determines the 
                     direction and magnitude of displacement in $x$ and $y$ coordinates respectively. 
 
@@ -68,7 +83,8 @@
                             t_{y}
                             \end{bmatrix}
                     \end{equation}
-                    \item \textbf{Rotation} rotates an object at particular angle $\theta$ from its origin, as shown in figure. Mathematically, 
+                    \item \textbf{Rotation} rotates an object at particular angle $\theta$ from its origin, as shown in figure \ref{fig_transformations}(c).
+                     Mathematically, 
                     the rotated points $x'$ and $y'$ can be obtained using the equation below: 
 
                     \begin{equation}
@@ -98,21 +114,70 @@
                     \end{enumerate} 
                 \end{enumerate}
 
-                \begin{figure}[!ht]%
-                    \centering
-                    \subfloat[Scaled]{{\includegraphics[width=4.5cm]{scaled.png} }}%
-                    \qquad
-                    \subfloat[Translation]{{\includegraphics[width=4.5cm]{translated.png} }}%
-                    \qquad
-                    \subfloat[Rotation]{{\includegraphics[width=4.5cm]{rotated.png} }}%
-                    \caption{Transformations}%
-                    \label{fig:triangulation}%
-                \end{figure}
-
-            \subsection{Homogeneous Coordinates: Vectorizing the Transformations}
-                \subsubsection{Graphical Intepertation}
-
-                \subsubsection{Limitation: Scale Ambiguity}
+            \subsection{Homogeneous Coordinates}
+                Given a point $P = (x,y)^{T}$ in cartesian coordinate system, we can append a dummy coordinate to form $P' = (x,y,1)^{T}$
+                in another coordinate frame. To go back, we can simply discard the last element. Furthermore, we can generalize the idea;
+                given a point $P = (x,y)^{T}$ in cartesian coordinate system, we can use $P' = (kx, ky, k)$ to represent the same point in 
+                new coordinate system called \textit{homogeneous coordinates.} Again, to go back, we can divide the $P'=(kx,ky,k)$ with $k$
+                to obtain the original point $P$. Graphically, a point $P$ in cartesian coordinate system corresponds to a ray in homogeneous 
+                coordinate system going from origin $O = (0,0,0)$ to $(x,y)$ on a plane perpendicular to $z-axis$ which is $k$ units away.
+                Using homogeneous coordinates, we can rewrite the transformations we defined in previous 
+                section as follows: 
+                \begin{enumerate}
+                    \item \textbf{Scaling} \begin{equation}
+                        k\begin{bmatrix}
+                            x'\\ 
+                            y'\\ 
+                            1
+                            \end{bmatrix} = 
+                            \begin{bmatrix}
+                            s_{x} & 0 & 0\\ 
+                            0 & s_{y} & 0\\ 
+                            0 & 0 & 1
+                            \end{bmatrix}
+                            \begin{bmatrix}
+                            x\\ 
+                            y\\ 
+                            1
+                            \end{bmatrix}
+                    \end{equation}
+                    \item \textbf{Translation} \begin{equation}
+                        k\begin{bmatrix}
+                            x'\\ 
+                            y'\\ 
+                            1
+                            \end{bmatrix} = 
+                            \begin{bmatrix}
+                            1 & 0 & t_{x}\\ 
+                            0 & 1 & t_{y}\\ 
+                            0 & 0 & 1
+                            \end{bmatrix}
+                            \begin{bmatrix}
+                            x\\ 
+                            y\\ 
+                            1
+                            \end{bmatrix}
+                    \end{equation}
+                    \item \textbf{Rotation} \begin{equation}
+                        k\begin{bmatrix}
+                            x'\\ 
+                            y'\\ 
+                            1
+                            \end{bmatrix} = 
+                            \begin{bmatrix}
+                            cos\theta & sin\theta & 0\\ 
+                            -sin\theta & cos\theta & 0\\ 
+                            0 & 0 & 1
+                            \end{bmatrix}
+                            \begin{bmatrix}
+                            x\\ 
+                            y\\ 
+                            1
+                            \end{bmatrix}
+                    \end{equation}
+                \end{enumerate}
+                Using homogeneous coordinates allowed us to represent all transformation to be rewritten in matrix vector product. This property
+                will enable us to combine successive transformations in one matrix seamlessly. 
 
             \subsection{3D Transformations}
                 \subsubsection{Translation}
@@ -139,6 +204,7 @@
     \chapter{3D Scene Estimations}
         \section{Triangulation}
             \subsection{Linear}
+
             \subsection{Nonlinear}
 
         \section{Perspective-n-Point Algorithm}
