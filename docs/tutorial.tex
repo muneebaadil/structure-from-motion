@@ -118,11 +118,10 @@
                 Given a point $P = (x,y)^{T}$ in cartesian coordinate system, we can append a dummy coordinate to form $P' = (x,y,1)^{T}$
                 in another coordinate frame. To go back, we can simply discard the last element. Furthermore, we can generalize the idea;
                 given a point $P = (x,y)^{T}$ in cartesian coordinate system, we can use $P' = (kx, ky, k)$ to represent the same point in 
-                new coordinate system called \textit{homogeneous coordinates.} Again, to go back, we can divide the $P'=(kx,ky,k)$ with $k$
+                new coordinate system called \textit{homogeneous coordinates.} Again, to go back, we can divide $P'=(kx,ky,k)$ with $k$
                 to obtain the original point $P$. Graphically, a point $P$ in cartesian coordinate system corresponds to a ray in homogeneous 
-                coordinate system going from origin $O = (0,0,0)$ to $(x,y)$ on a plane perpendicular to $z-axis$ which is $k$ units away.
-                Using homogeneous coordinates, we can rewrite the transformations we defined in previous 
-                section as follows: 
+                coordinate system going from origin $O = (0,0,0)$ to $(kx,ky)$ on a plane perpendicular to $z-axis$ which is $k$ units away.
+                Using homogeneous coordinates, we can rewrite the transformations we defined in previous section as follows: 
                 \begin{enumerate}
                     \item \textbf{Scaling} \begin{equation}
                         k\begin{bmatrix}
@@ -176,13 +175,11 @@
                             \end{bmatrix}
                     \end{equation}
                 \end{enumerate}
-                Using homogeneous coordinates allowed us to represent all transformation to be rewritten in matrix vector product. This property
+                Using homogeneous coordinates allowed us to rewrite all transformation in matrix vector product. This property
                 will enable us to combine successive transformations in one matrix seamlessly. 
 
-            \subsection{3D Transformations}
-                \subsubsection{Translation}
+            \subsection{Coordinate Transformations}
 
-                \subsubsection{Rotation}
 
         \section{Camera Models}
             \subsection{Intrinsics Parameters}
