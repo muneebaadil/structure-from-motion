@@ -3,5 +3,5 @@ data/
 *.ipynb
 *.pyc
 *.ply
-!SfM_demo.ipynb
+!tutorial.ipynb
 .vscode/
