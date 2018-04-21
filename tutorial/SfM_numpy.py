@@ -194,6 +194,7 @@ def GetTriangulatedPts(img1pts,img2pts,K,R,t,triangulateFunc,Rbase=None,tbase=No
     img1ptsNorm = cv2.convertPointsFromHomogeneous(img1ptsNorm)[:,0,:]
     img2ptsNorm = cv2.convertPointsFromHomogeneous(img2ptsNorm)[:,0,:]
     
+    print Rbase.shape, tbase.shape, R.shape, t.shape
     pts4d = triangulateFunc(np.hstack((Rbase,tbase)),np.hstack((R,t)),img1ptsNorm.T,img2ptsNorm.T)
     pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
     
@@ -251,7 +252,6 @@ def LinearPnP(X, x, K, isNormalized=False):
     return R, t
 
 def LinearPnPRansac(X,x,K,outlierThres,iters): 
-
     # if X.shape[1]==3:
     #     X = np.hstack((X, np.ones((X.shape[0],1))))
     # if x.shape[1]==2: 
