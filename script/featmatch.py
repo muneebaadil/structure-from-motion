@@ -15,8 +15,6 @@ def FeatMatch(opts):
     if not os.path.exists(feat_out_dir): 
         os.makedirs(feat_out_dir)
 
-    data = []
-
     for i, img_path in enumerate(img_paths): 
         img = cv2.imread(img_path)
         img_name = img_names[i].split('.')[0]
@@ -24,7 +22,6 @@ def FeatMatch(opts):
 
         feat = getattr(cv2.xfeatures2d, '{}_create'.format(opts.features))()
         kp, desc = feat.detectAndCompute(img,None)
-        data.append((img_name, kp, desc))
 
         kp_ = SerializeKeypoints(kp)
         
