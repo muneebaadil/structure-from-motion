@@ -38,7 +38,7 @@ class SFM(object):
         img1idx = np.array([m.queryIdx for m in matches])
         img2idx = np.array([m.trainIdx for m in matches])
 
-        #removing out the keypoints that were NOT matched. 
+        #filtering out the keypoints that were matched. 
         kp1_ = (np.array(kp1))[img1idx]
         kp2_ = (np.array(kp2))[img2idx]
 
@@ -46,7 +46,7 @@ class SFM(object):
         img1pts = np.array([kp.pt for kp in kp1_])
         img2pts = np.array([kp.pt for kp in kp2_])
 
-        return img1pts,img2pts
+        return img1pts, img2pts, img1idx, img2idx
 
     def _BaselinePoseEstimation(self, name1, name2):
 
@@ -56,7 +56,8 @@ class SFM(object):
         matches = self.matcher.match(desc1,desc2)
         matches = sorted(matches, key = lambda x:x.distance)
 
-        img1pts, img2pts = self._GetAlignedMatches(kp1,desc1,kp2,desc2,matches)
+        img1pts, img2pts, img1idx, img2idx = self._GetAlignedMatches(kp1,desc1,kp2,
+                                                                    desc2,matches)
         
         F,mask = cv2.findFundamentalMat(img1pts,img2pts,method=opts.fund_method,
                                         param1=opts.outlier_thres,param2=opts.fund_prob)
@@ -65,9 +66,11 @@ class SFM(object):
         E = self.K.T.dot(F.dot(self.K))
         _,R,t,_ = cv2.recoverPose(E,img1pts[mask],img2pts[mask],self.K)
 
-        self.image_data[name1] = [np.eye(3,3), np.zeros((3,1))]
-        self.image_data[name2] = [R,t]
-        self.matches_data[(name1,name2)] = [matches, img1pts[mask], img2pts[mask]]
+        self.image_data[name1] = [np.eye(3,3), np.zeros((3,1)), np.ones((len(kp1),))*-1]
+        self.image_data[name2] = [R,t,np.ones((len(kp2),))*-1]
+
+        self.matches_data[(name1,name2)] = [matches, img1pts[mask], img2pts[mask], 
+                                            img1idx[mask],img2idx[mask]]
 
         return R,t
 
@@ -83,21 +86,32 @@ class SFM(object):
             img1ptsNorm = cv2.convertPointsFromHomogeneous(img1ptsNorm)[:,0,:]
             img2ptsNorm = cv2.convertPointsFromHomogeneous(img2ptsNorm)[:,0,:]
 
-            #pdb.set_trace()
             pts4d = cv2.triangulatePoints(np.hstack((R1,t1)),np.hstack((R2,t2)),
                                             img1ptsNorm.T,img2ptsNorm.T)
             pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
 
             return pts3d
 
-        R1, t1 = self.image_data[name1]
-        R2, t2 = self.image_data[name2]
+        def _Update3DReference(ref1, ref2, img1idx, img2idx, upp_limit, low_limit=0): 
 
-        _, img1pts, img2pts = self.matches_data[(name1,name2)]
+            ref1[img1idx] = np.arange(upp_limit) + low_limit
+            ref2[img2idx] = np.arange(upp_limit) + low_limit
+
+            return ref1, ref2
+
+        R1, t1, ref1 = self.image_data[name1]
+        R2, t2, ref2 = self.image_data[name2]
+
+        _, img1pts, img2pts, img1idx, img2idx = self.matches_data[(name1,name2)]
         
         new_point_cloud = _TriangulateTwoViews(img1pts, img2pts, R1, t1, R2, t2)
         self.point_cloud = np.concatenate((self.point_cloud, new_point_cloud), axis=0)
 
+        ref1, ref2 = _Update3DReference(ref1, ref2, img1idx, img2idx,new_point_cloud.shape[0],
+                                        self.point_cloud.shape[0]-new_point_cloud.shape[0])
+        self.image_data[name1][-1] = ref1 
+        self.image_data[name2][-1] = ref2 
+        
         pts2ply(self.point_cloud)
         
 
@@ -124,7 +138,8 @@ def SetArguments(parser):
     parser.add_argument('--out_dir',action='store',type=str,default='../results/',dest='out_dir') 
 
     #computing parameters
-    parser.add_argument('--calibration_mat',action='store',type=str,default='benchmark',dest='calibration_mat')
+    parser.add_argument('--calibration_mat',action='store',type=str,default='benchmark',
+                        dest='calibration_mat')
     parser.add_argument('--fund_method',action='store',type=str,default='FM_RANSAC',dest='fund_method')
     parser.add_argument('--outlier_thres',action='store',type=float,default=.9,dest='outlier_thres')
     parser.add_argument('--fund_prob',action='store',type=float,default=.9,dest='fund_prob')

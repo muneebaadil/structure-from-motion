@@ -40,20 +40,37 @@ Please download the standard data benchmarks from [here](https://github.com/open
 6. Chapter 6: Putting It Together: Part II
 
 ### 2.2. SFM Pipeline
-To run, please follow the following commands: 
-```
-python sfm.py --data-dir <path-to-data-directory>
-```
+1. Go to `script/` directory
+    ```
+    cd script
+    ```
 
-All arguments are shown below
-```
-usage: sfm.py [-h] [--data_dir DATA_DIR] [--dataset DATASET]
-              [--features FEATURES] [--matcher MATCHER]
-              [--cross_check CROSS_CHECK] [--out_dir OUT_DIR]
-              [--calibration_mat CALIBRATION_MAT] [--fund_method FUND_METHOD]
-              [--outlier_thres OUTLIER_THRES] [--fund_prob FUND_PROB]
-              [--plot_error PLOT_ERROR] [--verbose VERBOSE]
-```
+2. Run `featmatch.py` to generate feature keypoints, descriptors and matches
+    ```
+    python featmatch.py
+    ```
+
+    All arguments are shown below: 
+    ```
+    usage: featmatch.py [-h] [--data_dir DATA_DIR] [--ext EXT] [--out_dir OUT_DIR]
+                        [--features FEATURES] [--print_every PRINT_EVERY]
+                        [--save_results SAVE_RESULTS]
+    ```
+
+3. Run `sfm.py` to generate point cloud: 
+    ```
+    python sfm.py --data-dir <path-to-data-directory>
+    ```
+
+    All arguments are shown below
+    ```
+    usage: sfm.py [-h] [--data_dir DATA_DIR] [--dataset DATASET]
+                [--features FEATURES] [--matcher MATCHER]
+                [--cross_check CROSS_CHECK] [--out_dir OUT_DIR]
+                [--calibration_mat CALIBRATION_MAT] [--fund_method FUND_METHOD]
+                [--outlier_thres OUTLIER_THRES] [--fund_prob FUND_PROB]
+                [--plot_error PLOT_ERROR] [--verbose VERBOSE]
+    ```
 
 ### 2.3. Booklet
 You can download the initial draft of the booklet from [here](https://github.com/muneebaadil)
