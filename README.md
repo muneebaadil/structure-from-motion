@@ -2,7 +2,7 @@
 
 A self reliant tutorial on _Structure from Motion_ (SFM). 
 
-![](./cache/results-cache/fountain.png) ![](./cache/results-cache/fountain_dense.png)
+![](./results/misc-figs/temp.png)
 
 In this repository, we provide
 * Self-reliant tutorial on SFM
