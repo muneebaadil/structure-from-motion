@@ -10,13 +10,13 @@ import pdb
 class SFM(object): 
     def __init__(self, opts): 
         self.opts = opts
-        self.point_cloud = None
+        self.point_cloud = np.zeros((0,3))
 
         self.images_dir = os.path.join(opts.data_dir,opts.dataset, 'images')
         self.feat_dir = os.path.join(opts.data_dir, opts.dataset, 'features', opts.features)
-        self.img_names = [x.split('.')[0] for x in sorted(os.listdir(self.images_dir))]
+        self.image_names = [x.split('.')[0] for x in sorted(os.listdir(self.images_dir))]
 
-        self.image_data = []
+        self.image_data, self.matches_data = {}, {}
         self.matcher = getattr(cv2, opts.matcher)(crossCheck=opts.cross_check)
 
         if opts.calibration_mat == 'benchmark': 
@@ -38,7 +38,7 @@ class SFM(object):
         img1idx = np.array([m.queryIdx for m in matches])
         img2idx = np.array([m.trainIdx for m in matches])
 
-        #filtering out the keypoints that were NOT matched. 
+        #removing out the keypoints that were NOT matched. 
         kp1_ = (np.array(kp1))[img1idx]
         kp2_ = (np.array(kp2))[img2idx]
 
@@ -48,7 +48,7 @@ class SFM(object):
 
         return img1pts,img2pts
 
-    def _BaselinePoseEstimation(self, name1, name2): 
+    def _BaselinePoseEstimation(self, name1, name2):
 
         kp1, desc1 = self._LoadFeatures(name1)
         kp2, desc2 = self._LoadFeatures(name2)  
@@ -65,21 +65,50 @@ class SFM(object):
         E = self.K.T.dot(F.dot(self.K))
         _,R,t,_ = cv2.recoverPose(E,img1pts[mask],img2pts[mask],self.K)
 
+        self.image_data[name1] = [np.eye(3,3), np.zeros((3,1))]
+        self.image_data[name2] = [R,t]
+        self.matches_data[(name1,name2)] = [matches, img1pts[mask], img2pts[mask]]
+
         return R,t
 
-    def _AddViewsToReconstruction(self): 
-        pass 
+    def _Triangulate(self, name1, name2): 
 
-    def _ToPly(self): 
-        pass
+        def _TriangulateTwoViews(img1pts, img2pts, R1, t1, R2, t2): 
+            img1ptsHom = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
+            img2ptsHom = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
+
+            img1ptsNorm = (np.linalg.inv(self.K).dot(img1ptsHom.T)).T
+            img2ptsNorm = (np.linalg.inv(self.K).dot(img2ptsHom.T)).T
+
+            img1ptsNorm = cv2.convertPointsFromHomogeneous(img1ptsNorm)[:,0,:]
+            img2ptsNorm = cv2.convertPointsFromHomogeneous(img2ptsNorm)[:,0,:]
+
+            #pdb.set_trace()
+            pts4d = cv2.triangulatePoints(np.hstack((R1,t1)),np.hstack((R2,t2)),
+                                            img1ptsNorm.T,img2ptsNorm.T)
+            pts3d = cv2.convertPointsFromHomogeneous(pts4d.T)[:,0,:]
+
+            return pts3d
+
+        R1, t1 = self.image_data[name1]
+        R2, t2 = self.image_data[name2]
+
+        _, img1pts, img2pts = self.matches_data[(name1,name2)]
+        
+        new_point_cloud = _TriangulateTwoViews(img1pts, img2pts, R1, t1, R2, t2)
+        self.point_cloud = np.concatenate((self.point_cloud, new_point_cloud), axis=0)
+
+        pts2ply(self.point_cloud)
+        
 
     def Run(self):
-        name1, name2 = self.img_names[0], self.img_names[1]
+        name1, name2 = '0004', '0006'#self.image_names[0], self.image_names[1]
 
         R,t = self._BaselinePoseEstimation(name1, name2)
+        self._Triangulate(name1, name2)
 
-        while False: 
-            self._NewViewPoseEstimation()
+        # for new_name in self.image_names[2:]: 
+        #     self._NewViewPoseEstimation()
 
         #self.ToPly()
         

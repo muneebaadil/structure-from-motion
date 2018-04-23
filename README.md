@@ -47,9 +47,12 @@ python sfm.py --data-dir <path-to-data-directory>
 
 All arguments are shown below
 ```
-usage: sfm.py [-h] [-dataDir DATADIR] [-outName OUTDIR]
-               [-printEvery PRINTEVERY] [-crossCheck CROSSCHECK]
-               [-outlierThres    OUTLIERTHRES] [-fundProb FUNDPROB]
+usage: sfm.py [-h] [--data_dir DATA_DIR] [--dataset DATASET]
+              [--features FEATURES] [--matcher MATCHER]
+              [--cross_check CROSS_CHECK] [--out_dir OUT_DIR]
+              [--calibration_mat CALIBRATION_MAT] [--fund_method FUND_METHOD]
+              [--outlier_thres OUTLIER_THRES] [--fund_prob FUND_PROB]
+              [--plot_error PLOT_ERROR] [--verbose VERBOSE]
 ```
 
 ### 2.3. Booklet
