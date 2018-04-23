@@ -111,12 +111,33 @@ class SFM(object):
                                         self.point_cloud.shape[0]-new_point_cloud.shape[0])
         self.image_data[name1][-1] = ref1 
         self.image_data[name2][-1] = ref2 
-        
-        pts2ply(self.point_cloud)
-        
 
+    def ToPly(self):
+        
+        def _GetColors(): 
+            colors = np.zeros_like(self.point_cloud)
+            
+            for k in self.image_data.keys(): 
+                _, _, ref = self.image_data[k]
+                kp, desc = self._LoadFeatures(k)
+                kp = np.array(kp)[ref>=0]
+                image_pts = np.array([_kp.pt for _kp in kp])
+
+                print 'reading {}'.format(os.path.join(self.images_dir, k+'.jpg'))
+                image = cv2.imread(os.path.join(self.images_dir, k+'.jpg'))[:,:,::-1]
+
+                colors[ref[ref>=0].astype(int)] = image[image_pts[:,1].astype(int),
+                                                        image_pts[:,0].astype(int)]
+            
+            return colors
+
+        colors = _GetColors()
+        pts2ply(self.point_cloud, colors)
+        
+        
     def Run(self):
-        name1, name2 = '0004', '0006'#self.image_names[0], self.image_names[1]
+        name1, name2, name3 = ['0004', '0006', '0005']
+        #self.image_names[0], self.image_names[1]
 
         R,t = self._BaselinePoseEstimation(name1, name2)
         self._Triangulate(name1, name2)
@@ -124,7 +145,7 @@ class SFM(object):
         # for new_name in self.image_names[2:]: 
         #     self._NewViewPoseEstimation()
 
-        #self.ToPly()
+        self.ToPly()
         
 
 def SetArguments(parser): 
@@ -143,8 +164,11 @@ def SetArguments(parser):
     parser.add_argument('--fund_method',action='store',type=str,default='FM_RANSAC',dest='fund_method')
     parser.add_argument('--outlier_thres',action='store',type=float,default=.9,dest='outlier_thres')
     parser.add_argument('--fund_prob',action='store',type=float,default=.9,dest='fund_prob')
+    
+    parser.add_argument('--pnp_method',action='store',type=str,default='dummy',dest='pnp_method')
 
     #misc
+    parser.add_argument('--color_policy',action='store',type=str,default='avg',dest='color_policy')
     parser.add_argument('--plot_error',action='store',type=bool,default=False,dest='plot_error')  
     parser.add_argument('--verbose',action='store',type=bool,default=True,dest='verbose')  
 

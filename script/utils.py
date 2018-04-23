@@ -1,5 +1,7 @@
 import numpy as np 
 import cv2 
+import pdb
+from itertools import izip 
 
 def SerializeKeypoints(kp): 
     """Serialize list of keypoint objects so it can be saved using pickle
@@ -100,7 +102,7 @@ def GetAlignedMatches(kp1,desc1,kp2,desc2,matches):
 
     return img1pts,img2pts
 
-def pts2ply(pts,filename='out.ply'): 
+def pts2ply(pts,colors,filename='out.ply'): 
     """Saves an ndarray of 3D coordinates (in meshlab format)"""
 
     with open(filename,'w') as f: 
@@ -118,5 +120,8 @@ def pts2ply(pts,filename='out.ply'):
         
         f.write('end_header\n')
         
-        for pt in pts: 
-            f.write('{} {} {} 255 255 255\n'.format(pt[0],pt[1],pt[2]))
+        #pdb.set_trace()
+        colors = colors.astype(int)
+        for pt, cl in izip(pts,colors): 
+            f.write('{} {} {} {} {} {}\n'.format(pt[0],pt[1],pt[2],
+                                                cl[0],cl[1],cl[2]))
