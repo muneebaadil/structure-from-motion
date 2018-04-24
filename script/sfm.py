@@ -14,6 +14,7 @@ class SFM(object):
 
         self.images_dir = os.path.join(opts.data_dir,opts.dataset, 'images')
         self.feat_dir = os.path.join(opts.data_dir, opts.dataset, 'features', opts.features)
+        self.matches_dir = os.path.join(opts.data_dir, opts.dataset, 'matches', opts.matcher)
         self.image_names = [x.split('.')[0] for x in sorted(os.listdir(self.images_dir))]
 
         self.image_data, self.matches_data = {}, {}
@@ -112,6 +113,9 @@ class SFM(object):
         self.image_data[name1][-1] = ref1 
         self.image_data[name2][-1] = ref2 
 
+    def _TriangulateNewView(self, name): 
+        pass
+
     def ToPly(self):
         
         def _GetColors(): 
@@ -139,20 +143,44 @@ class SFM(object):
         def _Find2D3DMatches(): 
             
             matcher_temp = getattr(cv2, opts.matcher)()
+            kps, descs = [], []
             for n in self.image_names: 
                 if n in self.image_data.keys():
                     kp, desc = self._LoadFeatures(n)
-                    matcher_temp.add([desc])
+
+                    kps.append(kp)
+                    descs.append(desc)
+            
+            matcher_temp.add(descs)
             matcher_temp.train()
 
             kp, desc = self._LoadFeatures(name)
 
             matches_2d3d = matcher_temp.match(queryDescriptors=desc)
-            
-            return None, None
 
-        pts3d, pts2d = _Find2D3DMatches()
-        
+            #retrieving 2d and 3d points
+            pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
+            print 'iterating {} long list'.format(len(matches_2d3d))
+            for m in matches_2d3d: 
+                train_img_idx, desc_idx, new_img_idx = m.imgIdx, m.trainIdx, m.queryIdx
+                point_cloud_idx = self.image_data[self.image_names[train_img_idx]][-1][desc_idx]
+                
+                #if the match corresponds to a point in 3d point cloud
+                if point_cloud_idx >= 0: 
+                    new_pt = self.point_cloud[int(point_cloud_idx)]
+                    pts3d = np.concatenate((pts3d, new_pt[np.newaxis]),axis=0)
+
+                    new_pt = np.array(kp[int(new_img_idx)].pt)
+                    pts2d = np.concatenate((pts2d, new_pt[np.newaxis]),axis=0)
+
+            print 'loop done'
+            return pts3d, pts2d, np.array(kp).shape[0]
+
+        pts3d, pts2d, ref_len = _Find2D3DMatches()
+        _, R, t, _ = cv2.solvePnPRansac(pts3d[:,np.newaxis],pts2d[:,np.newaxis],self.K,None,
+                            confidence=self.opts.pnp_prob,flags=cv2.SOLVEPNP_DLS)
+
+        self.image_data[name] = [R,t,np.ones((ref_len,3))]
                 
     def Run(self):
         name1, name2 = self.image_names[0], self.image_names[1]
@@ -162,7 +190,7 @@ class SFM(object):
 
         for new_name in self.image_names[2:]: 
             self._NewViewPoseEstimation(new_name)
-
+            self._TriangulateNewView(name)
             break 
 
         self.ToPly()
@@ -188,8 +216,10 @@ def SetArguments(parser):
     parser.add_argument('--fund_prob',action='store',type=float,default=.9,dest='fund_prob')
     
     parser.add_argument('--pnp_method',action='store',type=str,default='dummy',dest='pnp_method')
+    parser.add_argument('--pnp_prob',action='store',type=float,default=.99,dest='pnp_prob')
 
     #misc
+    parser.add_argument('--allow_duplicates',action='store',type=str,default=True,dest='allow_duplicates')
     parser.add_argument('--color_policy',action='store',type=str,default='avg',dest='color_policy')
     parser.add_argument('--plot_error',action='store',type=bool,default=False,dest='plot_error')  
     parser.add_argument('--verbose',action='store',type=bool,default=True,dest='verbose')  
