@@ -2,6 +2,5 @@ data/
 .ipynb*/
 *.ipynb
 *.pyc
-*.ply
 !tutorial.ipynb
 .vscode/
