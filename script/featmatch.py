@@ -7,10 +7,17 @@ import os
 from utils import * 
 
 def FeatMatch(opts): 
-    img_names = sorted(os.listdir(opts.data_dir))
-    img_paths = [os.path.join(opts.data_dir, x) for x in img_names if \
-                x.split('.')[-1] in opts.ext]
     
+    if len(opts.data_files) == 0: 
+        img_names = sorted(os.listdir(opts.data_dir))
+        img_paths = [os.path.join(opts.data_dir, x) for x in img_names if \
+                    x.split('.')[-1] in opts.ext]
+    
+    else: 
+        img_paths = opts.data_files
+        img_names = sorted([x.split('/')[-1] for x in opts.data_files])
+        print 'img_paths = {}'.format(img_paths)
+        
     feat_out_dir = os.path.join(opts.out_dir,'features',opts.features)
     if not os.path.exists(feat_out_dir): 
         os.makedirs(feat_out_dir)
@@ -40,6 +47,7 @@ def FeatMatch(opts):
 def SetArguments(parser): 
 
     #directories stuff
+    parser.add_argument('--data_files',action='store',type=str,default='../data/fountain-P11/images/0001.jpg,../data/fountain-P11/images/0001.jpg',dest='data_files') 
     parser.add_argument('--data_dir',action='store',type=str,default='../data/fountain-P11/images/',
                         dest='data_dir') 
     parser.add_argument('--ext',action='store',type=str,default='jpg,png',dest='ext') 
@@ -55,9 +63,15 @@ def SetArguments(parser):
 
 def PostprocessArgs(opts): 
     opts.ext = [x for x in opts.ext.split(',')]
+    
+    opts.data_files_ = []
+    if opts.data_files != '': 
+        opts.data_files_ = opts.data_files.split(',')
+    opts.data_files = opts.data_files_
 
 if __name__=='__main__': 
     parser = argparse.ArgumentParser()
     SetArguments(parser)
     opts = parser.parse_args()
+    PostprocessArgs(opts)
     FeatMatch(opts)
