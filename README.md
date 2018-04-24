@@ -1,4 +1,4 @@
-# How to Structure from Motion 
+# (Ongoing) How to Structure from Motion 
 
 A self reliant tutorial on _Structure from Motion_ (SFM). 
 
@@ -7,7 +7,7 @@ A self reliant tutorial on _Structure from Motion_ (SFM).
 In this repository, we provide
 * Self-reliant tutorial on SFM
 * SFM Pipeline Code
-* Associated Booklet 
+* Associated Booklet
 
 ## 1. Getting Started
 
@@ -64,12 +64,34 @@ Please download the standard data benchmarks from [here](https://github.com/open
 
     All arguments are shown below
     ```
-    usage: sfm.py [-h] [--data_dir DATA_DIR] [--dataset DATASET]
-                [--features FEATURES] [--matcher MATCHER]
-                [--cross_check CROSS_CHECK] [--out_dir OUT_DIR]
-                [--calibration_mat CALIBRATION_MAT] [--fund_method FUND_METHOD]
-                [--outlier_thres OUTLIER_THRES] [--fund_prob FUND_PROB]
-                [--plot_error PLOT_ERROR] [--verbose VERBOSE]
+    usage: sfm.py [-h] [--data_dir DATA_DIR] [--dataset DATASET] [--ext EXT]
+              [--out_dir OUT_DIR] [--features FEATURES] [--matcher MATCHER]
+              [--cross_check CROSS_CHECK] [--calibration_mat CALIBRATION_MAT]
+              [--fund_method FUND_METHOD] [--outlier_thres OUTLIER_THRES]
+              [--fund_prob FUND_PROB] [--pnp_method PNP_METHOD]
+              [--pnp_prob PNP_PROB] [--allow_duplicates ALLOW_DUPLICATES]
+              [--color_policy COLOR_POLICY] [--plot_error PLOT_ERROR]
+              [--verbose VERBOSE]
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    --data_dir DATA_DIR
+    --dataset DATASET
+    --ext EXT
+    --out_dir OUT_DIR
+    --features FEATURES
+    --matcher MATCHER
+    --cross_check CROSS_CHECK
+    --calibration_mat CALIBRATION_MAT
+    --fund_method FUND_METHOD
+    --outlier_thres OUTLIER_THRES
+    --fund_prob FUND_PROB
+    --pnp_method PNP_METHOD
+    --pnp_prob PNP_PROB
+    --allow_duplicates ALLOW_DUPLICATES
+    --color_policy COLOR_POLICY
+    --plot_error PLOT_ERROR
+    --verbose VERBOSE
     ```
 
 ### 2.3. Booklet
