@@ -12,9 +12,14 @@ class SFM(object):
         self.opts = opts
         self.point_cloud = np.zeros((0,3))
 
+        #setting up directory stuff..
         self.images_dir = os.path.join(opts.data_dir,opts.dataset, 'images')
         self.feat_dir = os.path.join(opts.data_dir, opts.dataset, 'features', opts.features)
         self.matches_dir = os.path.join(opts.data_dir, opts.dataset, 'matches', opts.matcher)
+        self.out_cloud_dir = os.path.join(opts.out_dir, opts.dataset, 'point-clouds')
+        if not os.path.exists(self.out_cloud_dir): 
+            os.makedirs(self.out_cloud_dir)
+
         self.image_names = [x.split('.')[0] for x in sorted(os.listdir(self.images_dir))]
 
         self.image_data, self.matches_data = {}, {}
@@ -212,7 +217,7 @@ class SFM(object):
             self._TriangulateNewView(new_name)
             break 
 
-        self.ToPly()
+        self.ToPly(os.path.join(self.opts.out_cloud_dir, 'cloud_0.ply'.))
         
 
 def SetArguments(parser): 
