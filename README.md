@@ -29,6 +29,25 @@ OpenCV Contrib
 ### 1.2. Data 
 Please download the standard data benchmarks from [here](https://github.com/openMVG/SfM_quality_evaluation)
 
+After downloading, you should have the following directory structure 
+```
+data/
+    fountain-P11/ 
+        images/
+            0001.jpg
+            ...
+            0011.jpg
+        gt_dense_cameras/
+            0000.jpg.camera
+            ...
+            0011.jpg.camera
+    Herz-Jesus-P8/
+        ...
+    Castle-P19/
+        ...
+    ...
+```
+
 ## 2. Demo/Quick Start
 
 ### 2.1. Tutorial Notebook 
