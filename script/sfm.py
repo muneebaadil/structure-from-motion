@@ -114,29 +114,27 @@ class SFM(object):
         self.image_data[name2][-1] = ref2 
 
     def _TriangulateNewView(self, name): 
-        pass
-
-    def ToPly(self):
         
-        def _GetColors(): 
-            colors = np.zeros_like(self.point_cloud)
-            
-            for k in self.image_data.keys(): 
-                _, _, ref = self.image_data[k]
-                kp, desc = self._LoadFeatures(k)
-                kp = np.array(kp)[ref>=0]
-                image_pts = np.array([_kp.pt for _kp in kp])
+        for prev_name in self.image_data.keys(): 
+            if prev_name != name: 
+                kp1, desc1 = self._LoadFeatures(prev_name)
+                kp2, desc2 = self._LoadFeatures(name)  
 
-                #print 'reading {}'.format(os.path.join(self.images_dir, k+'.jpg'))
-                image = cv2.imread(os.path.join(self.images_dir, k+'.jpg'))[:,:,::-1]
+                desc1 = desc1[self.image_data[prev_name][-1] < 0]
+                matches = self.matcher.match(desc1,desc2)
+                matches = sorted(matches, key = lambda x:x.distance)
 
-                colors[ref[ref>=0].astype(int)] = image[image_pts[:,1].astype(int),
-                                                        image_pts[:,0].astype(int)]
-            
-            return colors
+                img1pts, img2pts, img1idx, img2idx = self._GetAlignedMatches(kp1,desc1,kp2,
+                                                                            desc2,matches)
+                
+                F,mask = cv2.findFundamentalMat(img1pts,img2pts,method=opts.fund_method,
+                                                param1=opts.outlier_thres,param2=opts.fund_prob)
+                mask = mask.astype(bool).flatten()
 
-        colors = _GetColors()
-        pts2ply(self.point_cloud, colors)
+                self.matches_data[(prev_name,name)] = [matches, img1pts[mask], img2pts[mask], 
+                                            img1idx[mask],img2idx[mask]]
+                print 'triangulating {} and {}'.format(prev_name, name)
+                self._TriangulateTwoViews(prev_name, name)
         
     def _NewViewPoseEstimation(self, name): 
         
@@ -160,7 +158,6 @@ class SFM(object):
 
             #retrieving 2d and 3d points
             pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
-            print 'iterating {} long list'.format(len(matches_2d3d))
             for m in matches_2d3d: 
                 train_img_idx, desc_idx, new_img_idx = m.imgIdx, m.trainIdx, m.queryIdx
                 point_cloud_idx = self.image_data[self.image_names[train_img_idx]][-1][desc_idx]
@@ -173,14 +170,36 @@ class SFM(object):
                     new_pt = np.array(kp[int(new_img_idx)].pt)
                     pts2d = np.concatenate((pts2d, new_pt[np.newaxis]),axis=0)
 
-            print 'loop done'
             return pts3d, pts2d, np.array(kp).shape[0]
 
         pts3d, pts2d, ref_len = _Find2D3DMatches()
         _, R, t, _ = cv2.solvePnPRansac(pts3d[:,np.newaxis],pts2d[:,np.newaxis],self.K,None,
                             confidence=self.opts.pnp_prob,flags=cv2.SOLVEPNP_DLS)
+        R,_=cv2.Rodrigues(R)
+        self.image_data[name] = [R,t,np.ones((ref_len,))]
 
-        self.image_data[name] = [R,t,np.ones((ref_len,3))]
+    def ToPly(self):
+        
+        def _GetColors(): 
+            colors = np.zeros_like(self.point_cloud)
+            
+            for k in self.image_data.keys(): 
+                _, _, ref = self.image_data[k]
+                kp, desc = self._LoadFeatures(k)
+                kp = np.array(kp)[ref>=0]
+                image_pts = np.array([_kp.pt for _kp in kp])
+
+                #print 'reading {}'.format(os.path.join(self.images_dir, k+'.jpg'))
+                image = cv2.imread(os.path.join(self.images_dir, k+'.jpg'))[:,:,::-1]
+
+                colors[ref[ref>=0].astype(int)] = image[image_pts[:,1].astype(int),
+                                                        image_pts[:,0].astype(int)]
+            
+            return colors
+
+        colors = _GetColors()
+        #self.point_cloud = self.point_cloud - np.median(self.point_cloud,axis=0,keepdims=True)
+        pts2ply(self.point_cloud, colors)
                 
     def Run(self):
         name1, name2 = self.image_names[0], self.image_names[1]
@@ -190,7 +209,7 @@ class SFM(object):
 
         for new_name in self.image_names[2:]: 
             self._NewViewPoseEstimation(new_name)
-            self._TriangulateNewView(name)
+            self._TriangulateNewView(new_name)
             break 
 
         self.ToPly()
