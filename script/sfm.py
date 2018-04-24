@@ -74,9 +74,9 @@ class SFM(object):
 
         return R,t
 
-    def _Triangulate(self, name1, name2): 
+    def _TriangulateTwoViews(self, name1, name2): 
 
-        def _TriangulateTwoViews(img1pts, img2pts, R1, t1, R2, t2): 
+        def __TriangulateTwoViews(img1pts, img2pts, R1, t1, R2, t2): 
             img1ptsHom = cv2.convertPointsToHomogeneous(img1pts)[:,0,:]
             img2ptsHom = cv2.convertPointsToHomogeneous(img2pts)[:,0,:]
 
@@ -104,7 +104,7 @@ class SFM(object):
 
         _, img1pts, img2pts, img1idx, img2idx = self.matches_data[(name1,name2)]
         
-        new_point_cloud = _TriangulateTwoViews(img1pts, img2pts, R1, t1, R2, t2)
+        new_point_cloud = __TriangulateTwoViews(img1pts, img2pts, R1, t1, R2, t2)
         self.point_cloud = np.concatenate((self.point_cloud, new_point_cloud), axis=0)
 
         ref1, ref2 = _Update3DReference(ref1, ref2, img1idx, img2idx,new_point_cloud.shape[0],
@@ -123,7 +123,7 @@ class SFM(object):
                 kp = np.array(kp)[ref>=0]
                 image_pts = np.array([_kp.pt for _kp in kp])
 
-                print 'reading {}'.format(os.path.join(self.images_dir, k+'.jpg'))
+                #print 'reading {}'.format(os.path.join(self.images_dir, k+'.jpg'))
                 image = cv2.imread(os.path.join(self.images_dir, k+'.jpg'))[:,:,::-1]
 
                 colors[ref[ref>=0].astype(int)] = image[image_pts[:,1].astype(int),
@@ -134,16 +134,36 @@ class SFM(object):
         colors = _GetColors()
         pts2ply(self.point_cloud, colors)
         
+    def _NewViewPoseEstimation(self, name): 
         
+        def _Find2D3DMatches(): 
+            
+            matcher_temp = getattr(cv2, opts.matcher)()
+            for n in self.image_names: 
+                if n in self.image_data.keys():
+                    kp, desc = self._LoadFeatures(n)
+                    matcher_temp.add([desc])
+            matcher_temp.train()
+
+            kp, desc = self._LoadFeatures(name)
+
+            matches_2d3d = matcher_temp.match(queryDescriptors=desc)
+            
+            return None, None
+
+        pts3d, pts2d = _Find2D3DMatches()
+        
+                
     def Run(self):
-        name1, name2, name3 = ['0004', '0006', '0005']
-        #self.image_names[0], self.image_names[1]
+        name1, name2 = self.image_names[0], self.image_names[1]
 
         R,t = self._BaselinePoseEstimation(name1, name2)
-        self._Triangulate(name1, name2)
+        self._TriangulateTwoViews(name1, name2)
 
-        # for new_name in self.image_names[2:]: 
-        #     self._NewViewPoseEstimation()
+        for new_name in self.image_names[2:]: 
+            self._NewViewPoseEstimation(new_name)
+
+            break 
 
         self.ToPly()
         
@@ -153,12 +173,14 @@ def SetArguments(parser):
     #directory stuff
     parser.add_argument('--data_dir',action='store',type=str,default='../data/',dest='data_dir') 
     parser.add_argument('--dataset',action='store',type=str,default='fountain-P11',dest='dataset') 
-    parser.add_argument('--features',action='store',type=str,default='SURF',dest='features') 
-    parser.add_argument('--matcher',action='store',type=str,default='BFMatcher',dest='matcher') 
-    parser.add_argument('--cross_check',action='store',type=bool,default=True,dest='cross_check') 
+    parser.add_argument('--ext',action='store',type=str,default='jpg,png',dest='ext') 
     parser.add_argument('--out_dir',action='store',type=str,default='../results/',dest='out_dir') 
 
     #computing parameters
+    parser.add_argument('--features',action='store',type=str,default='SURF',dest='features') 
+    parser.add_argument('--matcher',action='store',type=str,default='BFMatcher',dest='matcher') 
+    parser.add_argument('--cross_check',action='store',type=bool,default=True,dest='cross_check') 
+
     parser.add_argument('--calibration_mat',action='store',type=str,default='benchmark',
                         dest='calibration_mat')
     parser.add_argument('--fund_method',action='store',type=str,default='FM_RANSAC',dest='fund_method')
@@ -174,6 +196,7 @@ def SetArguments(parser):
 
 def PostprocessArgs(opts): 
     opts.fund_method = getattr(cv2,opts.fund_method)
+    opts.ext = opts.ext.split(',')
 
 if __name__=='__main__': 
     parser = argparse.ArgumentParser()
