@@ -27,6 +27,8 @@ class SFM(object):
 
         if opts.calibration_mat == 'benchmark': 
             self.K = np.array([[2759.48,0,1520.69],[0,2764.16,1006.81],[0,0,1]])
+        elif opts.calibration_mat == 'lg_g3': 
+            self.K = np.array([[3.97*320, 0, 320],[0, 3.97*320, 240],[0,0,1]])
         else: 
             raise NotImplementedError
         
@@ -127,19 +129,24 @@ class SFM(object):
 
                 desc1 = desc1[self.image_data[prev_name][-1] < 0]
                 matches = self.matcher.match(desc1,desc2)
-                matches = sorted(matches, key = lambda x:x.distance)
 
-                img1pts, img2pts, img1idx, img2idx = self._GetAlignedMatches(kp1,desc1,kp2,
-                                                                            desc2,matches)
-                
-                F,mask = cv2.findFundamentalMat(img1pts,img2pts,method=opts.fund_method,
-                                                param1=opts.outlier_thres,param2=opts.fund_prob)
-                mask = mask.astype(bool).flatten()
+                if len(matches) > 0: 
+                    matches = sorted(matches, key = lambda x:x.distance)
 
-                self.matches_data[(prev_name,name)] = [matches, img1pts[mask], img2pts[mask], 
-                                            img1idx[mask],img2idx[mask]]
-                print 'triangulating {} and {}'.format(prev_name, name)
-                self._TriangulateTwoViews(prev_name, name)
+                    img1pts, img2pts, img1idx, img2idx = self._GetAlignedMatches(kp1,desc1,kp2,
+                                                                                desc2,matches)
+                    
+                    F,mask = cv2.findFundamentalMat(img1pts,img2pts,method=opts.fund_method,
+                                                    param1=opts.outlier_thres,param2=opts.fund_prob)
+                    mask = mask.astype(bool).flatten()
+
+                    self.matches_data[(prev_name,name)] = [matches, img1pts[mask], img2pts[mask], 
+                                                img1idx[mask],img2idx[mask]]
+                    print 'triangulating {} and {}'.format(prev_name, name)
+                    self._TriangulateTwoViews(prev_name, name)
+
+                else: 
+                    print 'skipping {} and {}'.format(prev_name, name)
         
     def _NewViewPoseEstimation(self, name): 
         
@@ -181,9 +188,9 @@ class SFM(object):
         _, R, t, _ = cv2.solvePnPRansac(pts3d[:,np.newaxis],pts2d[:,np.newaxis],self.K,None,
                             confidence=self.opts.pnp_prob,flags=cv2.SOLVEPNP_DLS)
         R,_=cv2.Rodrigues(R)
-        self.image_data[name] = [R,t,np.ones((ref_len,))]
+        self.image_data[name] = [R,t,np.ones((ref_len,))*-1]
 
-    def ToPly(self):
+    def ToPly(self, filename):
         
         def _GetColors(): 
             colors = np.zeros_like(self.point_cloud)
@@ -194,7 +201,6 @@ class SFM(object):
                 kp = np.array(kp)[ref>=0]
                 image_pts = np.array([_kp.pt for _kp in kp])
 
-                #print 'reading {}'.format(os.path.join(self.images_dir, k+'.jpg'))
                 image = cv2.imread(os.path.join(self.images_dir, k+'.jpg'))[:,:,::-1]
 
                 colors[ref[ref>=0].astype(int)] = image[image_pts[:,1].astype(int),
@@ -203,8 +209,7 @@ class SFM(object):
             return colors
 
         colors = _GetColors()
-        #self.point_cloud = self.point_cloud - np.median(self.point_cloud,axis=0,keepdims=True)
-        pts2ply(self.point_cloud, colors)
+        pts2ply(self.point_cloud, colors, filename)
                 
     def Run(self):
         name1, name2 = self.image_names[0], self.image_names[1]
@@ -212,12 +217,16 @@ class SFM(object):
         R,t = self._BaselinePoseEstimation(name1, name2)
         self._TriangulateTwoViews(name1, name2)
 
+        views_done = 2 
+        self.ToPly(os.path.join(self.out_cloud_dir, 'cloud_{}_view.ply'.format(views_done)))
+
         for new_name in self.image_names[2:]: 
+
             self._NewViewPoseEstimation(new_name)
             self._TriangulateNewView(new_name)
-            break 
 
-        self.ToPly(os.path.join(self.opts.out_cloud_dir, 'cloud_0.ply'.))
+            views_done += 1 
+            self.ToPly(os.path.join(self.out_cloud_dir, 'cloud_{}_view.ply'.format(views_done)))
         
 
 def SetArguments(parser): 
