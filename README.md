@@ -74,6 +74,15 @@ data/
     usage: featmatch.py [-h] [--data_dir DATA_DIR] [--ext EXT] [--out_dir OUT_DIR]
                         [--features FEATURES] [--print_every PRINT_EVERY]
                         [--save_results SAVE_RESULTS]
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    --data_dir  directory containing images (default: ../data/fountain-P11/images/)
+    --ext   comma seperated string of allowed image extensions (default: jpg,png)
+    --out_dir   root directory to store results in (default: ../data/fountain-P11)
+    --features  [SIFT|SURF] Feature algorithm to use (default: SURF)
+    --print_every   [1,+inf] print progress every print_every seconds, -1 to disable (default: 1)
+    --save_results  [True|False] whether to save images with keypoints drawn on them (default: True)
     ```
 
 3. Run `sfm.py` to generate point cloud: 
@@ -94,19 +103,22 @@ data/
 
     optional arguments:
     -h, --help            show this help message and exit
-    --data_dir DATA_DIR
-    --dataset DATASET
-    --ext EXT
-    --out_dir OUT_DIR
-    --features FEATURES
-    --matcher MATCHER
-    --cross_check CROSS_CHECK
-    --calibration_mat CALIBRATION_MAT
-    --fund_method FUND_METHOD
-    --outlier_thres OUTLIER_THRES
-    --fund_prob FUND_PROB
+    --data_dir        root directory containing input data (default: ../data/)
+    --dataset        name of dataset (default: fountain-P11)
+    --ext        comma seperated string of allowed image extensions (default: jpg,png)
+    --out_dir        root directory to store results in (default: ../results/)
+
+    --features        [SIFT|SURF] Feature algorithm to use (default: SURF)
+    --matcher        [BFMatcher|FlannBasedMatcher] Matching algorithm to use (default: BFMatcher)
+    --cross_check        [True|False] Whether to cross check feature matching or not (default: True)
+    --calibration_mat        [benchmark|lg_g3] type of intrinsic camera to use (default: benchmark)
+    --fund_method        method to estimate fundamental matrix (default: FM_RANSAC)
+    --outlier_thres        threhold value of outlier to be used in fundamental matrix estimation (default: 0.9)
+    --fund_prob        confidence in fundamental matrix estimation required(default: 0.9)
+
     --pnp_method PNP_METHOD
     --pnp_prob PNP_PROB
+    
     --allow_duplicates ALLOW_DUPLICATES
     --color_policy COLOR_POLICY
     --plot_error PLOT_ERROR
@@ -124,4 +136,4 @@ You can download the initial draft of the booklet from [here](https://github.com
 ## Authors
 
 * [Muneeb Aadil](https://github.com/muneebaadil) (imuneebaadil@gmail.com)
-* [Sibt Ul Hussain](https://sites.google.com/site/sibtulhussain/) (sibtul.hussain@nu.edu.pk)
+* [Sibt ul Hussain](https://sites.google.com/site/sibtulhussain/) (sibtul.hussain@nu.edu.pk)
