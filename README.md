@@ -6,7 +6,7 @@ A self reliant tutorial on _Structure from Motion_ (SFM).
 
 In this repository, we provide
 * Self-reliant tutorial on SFM
-* SFM Pipeline Code
+* SFM Python Script
 * Associated Booklet
 
 ## 1. Getting Started
@@ -51,14 +51,15 @@ data/
 ## 2. Demo/Quick Start
 
 ### 2.1. Tutorial Notebook 
+Tutorials are in `tutorial/` directory. Furthermore, they're divided in following sections
 1. Chapter 1: Prerequisites
 2. Chapter 2: Epipolar Geometry
 3. Chapter 3: 3D Scene Estimations
 4. Chapter 4: Putting It Together: Part I
-5. Chapter 5: Bundle Adjustment
-6. Chapter 6: Putting It Together: Part II
+5. Chapter 5: Bundle Adjustment (Ongoing)
+6. Chapter 6: Putting It Together: Part II (Ongoing)
 
-### 2.2. SFM Pipeline
+### 2.2. SFM Script
 1. Go to `script/` directory
     ```
     cd script
@@ -77,12 +78,15 @@ data/
 
     optional arguments:
     -h, --help            show this help message and exit
+
     --data_dir  directory containing images (default: ../data/fountain-P11/images/)
     --ext   comma seperated string of allowed image extensions (default: jpg,png)
     --out_dir   root directory to store results in (default: ../data/fountain-P11)
+
     --features  [SIFT|SURF] Feature algorithm to use (default: SURF)
+
     --print_every   [1,+inf] print progress every print_every seconds, -1 to disable (default: 1)
-    --save_results  [True|False] whether to save images with keypoints drawn on them (default: True)
+    --save_results  [True|False] whether to save images with keypoints drawn on them (default: False)
     ```
 
 3. Run `sfm.py` to generate point cloud: 
@@ -103,6 +107,7 @@ data/
 
     optional arguments:
     -h, --help            show this help message and exit
+    
     --data_dir        root directory containing input data (default: ../data/)
     --dataset        name of dataset (default: fountain-P11)
     --ext        comma seperated string of allowed image extensions (default: jpg,png)

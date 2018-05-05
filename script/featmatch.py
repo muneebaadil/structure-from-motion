@@ -51,9 +51,11 @@ def SetArguments(parser):
                         dest='data_dir',help='directory containing images (default: ../data/\
                         fountain-P11/images/)') 
     parser.add_argument('--ext',action='store',type=str,default='jpg,png',dest='ext',
-                        help='comma seperated string of allowed image extensions (default: jpg,png)') 
+                        help='comma seperated string of allowed image extensions \
+                        (default: jpg,png)') 
     parser.add_argument('--out_dir',action='store',type=str,default='../data/fountain-P11/',
-                        dest='out_dir',help='root directory to store results in (default: ../data/fountain-P11)') 
+                        dest='out_dir',help='root directory to store results in \
+                        (default: ../data/fountain-P11)') 
 
     #feature matching args
     parser.add_argument('--features',action='store', type=str, default='SURF', dest='features',
@@ -61,9 +63,11 @@ def SetArguments(parser):
     
     #misc
     parser.add_argument('--print_every',action='store', type=int, default=1, dest='print_every',
-                        help='[1,+inf] print progress every print_every seconds, -1 to disable (default: 1)')
-    parser.add_argument('--save_results',action='store', type=str, default=False, dest='save_results',
-                        help='[True|False] whether to save images with keypoints drawn on them (default: True)')  
+                        help='[1,+inf] print progress every print_every seconds, -1 to disable \
+                        (default: 1)')
+    parser.add_argument('--save_results',action='store', type=str, default=False, 
+                        dest='save_results',help='[True|False] whether to save images with\
+                        keypoints drawn on them (default: False)')  
 
 def PostprocessArgs(opts): 
     opts.ext = [x for x in opts.ext.split(',')]

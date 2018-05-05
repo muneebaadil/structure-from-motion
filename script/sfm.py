@@ -138,7 +138,8 @@ class SFM(object):
                                                                                 desc2,matches)
                     
                     F,mask = cv2.findFundamentalMat(img1pts,img2pts,method=opts.fund_method,
-                                                    param1=opts.outlier_thres,param2=opts.fund_prob)
+                                                    param1=opts.outlier_thres,
+                                                    param2=opts.fund_prob)
                     mask = mask.astype(bool).flatten()
 
                     self.matches_data[(prev_name,name)] = [matches, img1pts[mask], img2pts[mask], 
@@ -238,7 +239,8 @@ def SetArguments(parser):
     parser.add_argument('--dataset',action='store',type=str,default='fountain-P11',dest='dataset',
                         help='name of dataset (default: fountain-P11)') 
     parser.add_argument('--ext',action='store',type=str,default='jpg,png',dest='ext', 
-                        help='comma seperated string of allowed image extensions (default: jpg,png)') 
+                        help='comma seperated string of allowed image extensions \
+                        (default: jpg,png)') 
     parser.add_argument('--out_dir',action='store',type=str,default='../results/',dest='out_dir',
                         help='root directory to store results in (default: ../results/)') 
 
@@ -246,15 +248,18 @@ def SetArguments(parser):
     parser.add_argument('--features',action='store',type=str,default='SURF',dest='features',
                         help='[SIFT|SURF] Feature algorithm to use (default: SURF)')
     parser.add_argument('--matcher',action='store',type=str,default='BFMatcher',dest='matcher',
-                        help='[BFMatcher|FlannBasedMatcher] Matching algorithm to use (default: BFMatcher)') 
+                        help='[BFMatcher|FlannBasedMatcher] Matching algorithm to use \
+                        (default: BFMatcher)') 
     parser.add_argument('--cross_check',action='store',type=bool,default=True,dest='cross_check',
-                        help='[True|False] Whether to cross check feature matching or not (default: True)') 
+                        help='[True|False] Whether to cross check feature matching or not \
+                        (default: True)') 
 
     parser.add_argument('--calibration_mat',action='store',type=str,default='benchmark',
-                        dest='calibration_mat',help='[benchmark|lg_g3] type of intrinsic camera to use \
-                        (default: benchmark)')
-    parser.add_argument('--fund_method',action='store',type=str,default='FM_RANSAC',dest='fund_method',
-                        help='method to estimate fundamental matrix (default: FM_RANSAC)')
+                        dest='calibration_mat',help='[benchmark|lg_g3] type of intrinsic camera \
+                        to use (default: benchmark)')
+    parser.add_argument('--fund_method',action='store',type=str,default='FM_RANSAC',
+                        dest='fund_method',help='method to estimate fundamental matrix \
+                        (default: FM_RANSAC)')
     parser.add_argument('--outlier_thres',action='store',type=float,default=.9,dest='outlier_thres',
                         help='threhold value of outlier to be used in fundamental matrix estimation\
                          (default: 0.9)')
@@ -265,7 +270,8 @@ def SetArguments(parser):
     parser.add_argument('--pnp_prob',action='store',type=float,default=.99,dest='pnp_prob')
 
     #misc
-    parser.add_argument('--allow_duplicates',action='store',type=str,default=True,dest='allow_duplicates')
+    parser.add_argument('--allow_duplicates',action='store',type=str,default=True,
+                        dest='allow_duplicates')
     parser.add_argument('--color_policy',action='store',type=str,default='avg',dest='color_policy')
     parser.add_argument('--plot_error',action='store',type=bool,default=False,dest='plot_error')  
     parser.add_argument('--verbose',action='store',type=bool,default=True,dest='verbose')  
