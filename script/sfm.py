@@ -163,41 +163,30 @@ class SFM(object):
     def _NewViewPoseEstimation(self, name): 
         
         def _Find2D3DMatches(): 
-            
-            matcher_temp = getattr(cv2, opts.matcher)()
-            kps, descs = [], []
-            for n in self.image_names: 
-                if n in self.image_data.keys():
-                    kp, desc = self._LoadFeatures(n)
 
-                    kps.append(kp)
-                    descs.append(desc)
-            
-            matcher_temp.add(descs)
-            matcher_temp.train()
-
+            pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
             kp, desc = self._LoadFeatures(name)
 
-            t1 = time()
-            matches_2d3d = matcher_temp.match(queryDescriptors=desc)
-            t2 = time()
-            print '2d 3d matching time taken = {}'.format(t2-t1)
+            i = 0 
+            
+            while i < len(self.image_names): 
+                curr_name = self.image_names[i]
 
-            #retrieving 2d and 3d points
-            pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
-            for m in matches_2d3d: 
-                train_img_idx, desc_idx, new_img_idx = m.imgIdx, m.trainIdx, m.queryIdx
-                point_cloud_idx = self.image_data[self.image_names[train_img_idx]][-1][desc_idx]
-                
-                #if the match corresponds to a point in 3d point cloud
-                if point_cloud_idx >= 0: 
-                    new_pt = self.point_cloud[int(point_cloud_idx)]
-                    pts3d = np.concatenate((pts3d, new_pt[np.newaxis]),axis=0)
+                if curr_name in self.image_data.keys(): 
+                    matches = self._LoadMatches(curr_name, name)
 
-                    new_pt = np.array(kp[int(new_img_idx)].pt)
-                    pts2d = np.concatenate((pts2d, new_pt[np.newaxis]),axis=0)
+                    ref = self.image_data[curr_name][-1]
+                    pts3d_idx = np.array([ref[m.queryIdx] for m in matches \
+                                        if ref[m.queryIdx] > 0])
+                    pts2d_ = np.array([kp[m.trainIdx].pt for m in matches \
+                                        if ref[m.queryIdx] > 0])
+                                        
+                    pts3d = np.concatenate((pts3d, self.point_cloud[pts3d_idx.astype(int)]),axis=0)
+                    pts2d = np.concatenate((pts2d, pts2d_),axis=0)
 
-            return pts3d, pts2d, np.array(kp).shape[0]
+                i += 1 
+
+            return pts3d, pts2d, len(kp)
 
         pts3d, pts2d, ref_len = _Find2D3DMatches()
         _, R, t, _ = cv2.solvePnPRansac(pts3d[:,np.newaxis],pts2d[:,np.newaxis],self.K,None,
@@ -301,3 +290,34 @@ if __name__=='__main__':
     
     sfm = SFM(opts)
     sfm.Run()
+
+# matcher_temp = getattr(cv2, opts.matcher)()
+# kps, descs = [], []
+# for n in self.image_names: 
+#     if n in self.image_data.keys():
+#         kp, desc = self._LoadFeatures(n)
+
+#         kps.append(kp)
+#         descs.append(desc)
+
+# matcher_temp.add(descs)
+# matcher_temp.train()
+
+# kp, desc = self._LoadFeatures(name)
+
+# matches_2d3d = matcher_temp.match(queryDescriptors=desc)
+
+# #retrieving 2d and 3d points
+# pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
+# for m in matches_2d3d: 
+#     train_img_idx, desc_idx, new_img_idx = m.imgIdx, m.trainIdx, m.queryIdx
+#     point_cloud_idx = self.image_data[self.image_names[train_img_idx]][-1][desc_idx]
+
+#     #if the match corresponds to a point in 3d point cloud
+#     if point_cloud_idx >= 0: 
+#         new_pt = self.point_cloud[int(point_cloud_idx)]
+#         pts3d = np.concatenate((pts3d, new_pt[np.newaxis]),axis=0)
+
+#         new_pt = np.array(kp[int(new_img_idx)].pt)
+#         pts2d = np.concatenate((pts2d, new_pt[np.newaxis]),axis=0)
+# return pts3d, pts2d, len(kp)
