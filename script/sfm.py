@@ -138,13 +138,8 @@ class SFM(object):
                 kp2, desc2 = self._LoadFeatures(name)  
 
                 prev_name_ref = self.image_data[prev_name][-1]
-                desc1 = desc1[self.image_data[prev_name][-1] < 0]
-                matches = self.matcher.match(desc1,desc2)
-
-                # matches = self._LoadMatches(prev_name,name)
-                # matches = [match for match in matches if prev_name_ref[match.queryIdx] < 0]
-
-                # pdb.set_trace()
+                matches = self._LoadMatches(prev_name,name)
+                matches = [match for match in matches if prev_name_ref[match.queryIdx] < 0]
 
                 if len(matches) > 0: 
                     matches = sorted(matches, key = lambda x:x.distance)

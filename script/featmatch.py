@@ -13,7 +13,6 @@ def FeatMatch(opts, data_files=[]):
         img_names = sorted(os.listdir(opts.data_dir))
         img_paths = [os.path.join(opts.data_dir, x) for x in img_names if \
                     x.split('.')[-1] in opts.ext]
-        img_paths = img_paths[:2]
     
     else: 
         img_paths = data_files
