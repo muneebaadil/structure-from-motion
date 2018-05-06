@@ -52,22 +52,19 @@ def SerializeMatches(matches):
         out.append(matchTemp)
     return out
 
-def DeserializeMatchesDict(matches): 
+def DeserializeMatches(matches): 
     """Deserialize dictionary of matches so it can be converted back to 
     native opencv's format. 
     
     Args: 
-    matches: Serialized dictionary (same format as output of SerealizeMatches)
+    matches: Serialized list of matches object
     
     Returns: 
-    out: Deserealized dictionary (same format as input of SerealizeMatches method)"""
+    out: List of matches object"""
 
-    out = {}
-    for k,v in matches.items(): 
-        temp = []
-        for match in v:
-            temp.append(cv2.DMatch(match[0],match[1],match[2],match[3]))
-        out[k] = temp 
+    out = []
+    for match in matches:
+        out.append(cv2.DMatch(match[0],match[1],match[2],match[3])) 
     return out
 
 def GetAlignedMatches(kp1,desc1,kp2,desc2,matches):
