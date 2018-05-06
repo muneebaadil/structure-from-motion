@@ -3,6 +3,7 @@ import numpy as np
 import pickle 
 import argparse
 import os 
+from time import time
 
 from utils import * 
 
@@ -12,15 +13,22 @@ def FeatMatch(opts, data_files=[]):
         img_names = sorted(os.listdir(opts.data_dir))
         img_paths = [os.path.join(opts.data_dir, x) for x in img_names if \
                     x.split('.')[-1] in opts.ext]
+        img_paths = img_paths[:2]
     
     else: 
         img_paths = data_files
         img_names = sorted([x.split('/')[-1] for x in data_files])
         
     feat_out_dir = os.path.join(opts.out_dir,'features',opts.features)
+    matches_out_dir = os.path.join(opts.out_dir,'matches',opts.matcher)
+
     if not os.path.exists(feat_out_dir): 
         os.makedirs(feat_out_dir)
+    if not os.path.exists(matches_out_dir): 
+        os.makedirs(matches_out_dir)
     
+    data = []
+    t1 = time()
     for i, img_path in enumerate(img_paths): 
         img = cv2.imread(img_path)
         img_name = img_names[i].split('.')[0]
@@ -28,6 +36,7 @@ def FeatMatch(opts, data_files=[]):
 
         feat = getattr(cv2.xfeatures2d, '{}_create'.format(opts.features))()
         kp, desc = feat.detectAndCompute(img,None)
+        data.append((img_name, kp, desc))
 
         kp_ = SerializeKeypoints(kp)
         
@@ -40,8 +49,42 @@ def FeatMatch(opts, data_files=[]):
         if opts.save_results: 
             raise NotImplementedError
 
-        if (i % opts.print_every) == 0:
-            print '{}/{} features done..'.format(i+1,len(img_paths))
+        t2 = time()
+
+        if (i % opts.print_every) == 0:    
+            print 'FEATURES DONE: {0}/{1} [time={2:.2f}s]'.format(i+1,len(img_paths),t2-t1)
+
+        t1 = time()
+
+    num_done = 0 
+    num_matches = ((len(img_paths)-1) * (len(img_paths))) / 2
+
+    t1 = time()
+    for i in xrange(len(data)): 
+        for j in xrange(i+1, len(data)): 
+            img_name1, kp1, desc1 = data[i]
+            img_name2, kp2, desc2 = data[j]
+
+            matcher = getattr(cv2,opts.matcher)(crossCheck=opts.cross_check)
+            matches = matcher.match(desc1,desc2)
+
+            matches = sorted(matches, key = lambda x:x.distance)
+            matches_ = SerializeMatches(matches)
+
+            pickle_path = os.path.join(matches_out_dir, 'match_{}_{}.pkl'.format(img_name1,
+                                                                                 img_name2))
+            with open(pickle_path,'wb') as out:
+                pickle.dump(matches_, out)
+
+            num_done += 1 
+            t2 = time()
+
+            if (num_done % opts.print_every) == 0: 
+                print 'MATCHES DONE: {0}/{1} [time={2:.2f}s]'.format(num_done, num_matches, t2-t1)
+
+            t1 = time()
+            
+
 
 def SetArguments(parser): 
 
@@ -60,6 +103,12 @@ def SetArguments(parser):
     #feature matching args
     parser.add_argument('--features',action='store', type=str, default='SURF', dest='features',
                         help='[SIFT|SURF] Feature algorithm to use (default: SURF)') 
+    parser.add_argument('--matcher',action='store',type=str,default='BFMatcher',dest='matcher',
+                        help='[BFMatcher|FlannBasedMatcher] Matching algorithm to use \
+                        (default: BFMatcher)') 
+    parser.add_argument('--cross_check',action='store',type=bool,default=True,dest='cross_check',
+                        help='[True|False] Whether to cross check feature matching or not \
+                        (default: True)') 
     
     #misc
     parser.add_argument('--print_every',action='store', type=int, default=1, dest='print_every',
@@ -82,4 +131,5 @@ if __name__=='__main__':
     SetArguments(parser)
     opts = parser.parse_args()
     PostprocessArgs(opts)
+
     FeatMatch(opts, opts.data_files)
