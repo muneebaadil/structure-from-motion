@@ -202,7 +202,7 @@ def GetTriangulatedPts(img1pts,img2pts,K,R,t,triangulateFunc,Rbase=None,tbase=No
 
 def ComputeReprojections(X,R,t,K): 
     """
-    X: (n,3) 3D triangulated point in world coordinate system
+    X: (n,3) 3D triangulated points in world coordinate system
     R: (3,3) Rotation Matrix to convert from world to camera coordinate system
     t: (3,1) Translation vector (from camera's origin to world's origin)
     K: (3,3) Camera calibration matrix

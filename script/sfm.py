@@ -154,7 +154,6 @@ class SFM(object):
 
                     self.matches_data[(prev_name,name)] = [matches, img1pts[mask], img2pts[mask], 
                                                 img1idx[mask],img2idx[mask]]
-                    print 'triangulating {} and {}'.format(prev_name, name)
                     self._TriangulateTwoViews(prev_name, name)
 
                 else: 
@@ -163,34 +162,42 @@ class SFM(object):
     def _NewViewPoseEstimation(self, name): 
         
         def _Find2D3DMatches(): 
+            
+            matcher_temp = getattr(cv2, opts.matcher)()
+            kps, descs = [], []
+            for n in self.image_names: 
+                if n in self.image_data.keys():
+                    kp, desc = self._LoadFeatures(n)
 
-            pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
+                    kps.append(kp)
+                    descs.append(desc)
+            
+            matcher_temp.add(descs)
+            matcher_temp.train()
+
             kp, desc = self._LoadFeatures(name)
 
-            i = 0 
-            
-            while i < len(self.image_names): 
-                curr_name = self.image_names[i]
+            matches_2d3d = matcher_temp.match(queryDescriptors=desc)
 
-                if curr_name in self.image_data.keys(): 
-                    matches = self._LoadMatches(curr_name, name)
+            #retrieving 2d and 3d points
+            pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
+            for m in matches_2d3d: 
+                train_img_idx, desc_idx, new_img_idx = m.imgIdx, m.trainIdx, m.queryIdx
+                point_cloud_idx = self.image_data[self.image_names[train_img_idx]][-1][desc_idx]
+                
+                #if the match corresponds to a point in 3d point cloud
+                if point_cloud_idx >= 0: 
+                    new_pt = self.point_cloud[int(point_cloud_idx)]
+                    pts3d = np.concatenate((pts3d, new_pt[np.newaxis]),axis=0)
 
-                    ref = self.image_data[curr_name][-1]
-                    pts3d_idx = np.array([ref[m.queryIdx] for m in matches \
-                                        if ref[m.queryIdx] > 0])
-                    pts2d_ = np.array([kp[m.trainIdx].pt for m in matches \
-                                        if ref[m.queryIdx] > 0])
-                                        
-                    pts3d = np.concatenate((pts3d, self.point_cloud[pts3d_idx.astype(int)]),axis=0)
-                    pts2d = np.concatenate((pts2d, pts2d_),axis=0)
+                    new_pt = np.array(kp[int(new_img_idx)].pt)
+                    pts2d = np.concatenate((pts2d, new_pt[np.newaxis]),axis=0)
 
-                i += 1 
-
-            return pts3d, pts2d, len(kp)
+            return pts3d, pts2d, np.array(kp).shape[0]
 
         pts3d, pts2d, ref_len = _Find2D3DMatches()
         _, R, t, _ = cv2.solvePnPRansac(pts3d[:,np.newaxis],pts2d[:,np.newaxis],self.K,None,
-                            confidence=self.opts.pnp_prob,flags=cv2.SOLVEPNP_DLS)
+                            confidence=self.opts.pnp_prob,flags=getattr(cv2,opts.pnp_method))
         R,_=cv2.Rodrigues(R)
         self.image_data[name] = [R,t,np.ones((ref_len,))*-1]
 
@@ -214,23 +221,65 @@ class SFM(object):
 
         colors = _GetColors()
         pts2ply(self.point_cloud, colors, filename)
+
+    def _ComputeReprojectionError(self, name): 
+        
+        def _ComputeReprojections(X,R,t,K): 
+            outh = K.dot(R.dot(X.T) + t )
+            out = cv2.convertPointsFromHomogeneous(outh.T)[:,0,:]
+            return out 
+
+        R, t, ref = self.image_data[name]
+        reprojs = _ComputeReprojections(self.point_cloud[ref], R, t, self.K)
+        
                 
     def Run(self):
         name1, name2 = self.image_names[0], self.image_names[1]
 
+        total_time = 0
+
+        t1 = time()
         self._BaselinePoseEstimation(name1, name2)
+        t2 = time()
+        this_time = t2-t1
+        total_time += this_time
+        print 'Baseline Cameras {0}, {1}: Pose Estimation [time={2:.3}s]'.format(name1, name2,
+                                                                                 this_time)
+
         self._TriangulateTwoViews(name1, name2)
+        t1 = time()
+        this_time = t1-t2
+        total_time += this_time
+        print 'Baseline Cameras {0}, {1}: Baseline Triangulation [time={2:.3}s]'.format(name1, 
+                                                                                name2, this_time)
 
         views_done = 2 
+
+        #3d point cloud generation and reprojection error evaluation
         self.ToPly(os.path.join(self.out_cloud_dir, 'cloud_{}_view.ply'.format(views_done)))
+        self._computeReprojectionError(name1)
+
 
         for new_name in self.image_names[2:]: 
 
+            t1 = time()
             self._NewViewPoseEstimation(new_name)
+            t2 = time()
+            this_time = t2-t1
+            total_time += this_time
+            print 'Camera {0}: Pose Estimation [time={1:.3}s]'.format(new_name, this_time)
+
             self._TriangulateNewView(new_name)
+            t1 = time()
+            this_time = t1-t2
+            total_time += this_time
+            print 'Camera {0}: Triangulation [time={1:.3}s]'.format(new_name, this_time)
 
             views_done += 1 
             self.ToPly(os.path.join(self.out_cloud_dir, 'cloud_{}_view.ply'.format(views_done)))
+
+        print 'Reconstruction Completed [t={0:.6}s], \
+                Results stored in {1}'.format(total_time, self.out_dir)
         
 
 def SetArguments(parser): 
@@ -268,8 +317,11 @@ def SetArguments(parser):
     parser.add_argument('--fund_prob',action='store',type=float,default=.9,dest='fund_prob',
                         help='confidence in fundamental matrix estimation required (default: 0.9)')
     
-    parser.add_argument('--pnp_method',action='store',type=str,default='dummy',dest='pnp_method')
-    parser.add_argument('--pnp_prob',action='store',type=float,default=.99,dest='pnp_prob')
+    parser.add_argument('--pnp_method',action='store',type=str,default='SOLVEPNP_DLS',
+                        dest='pnp_method',help='[SOLVEPNP_DLS | SOLVEPNP_EPNP] method used for \
+                        PnP estimation, see OpenCV doc for more options (default: SOLVEPNP_DLS'))
+    parser.add_argument('--pnp_prob',action='store',type=float,default=.99,dest='pnp_prob',
+                        help='confidence in PnP estimation required (default: 0.99)')
 
     #misc
     parser.add_argument('--allow_duplicates',action='store',type=str,default=True,
@@ -290,34 +342,3 @@ if __name__=='__main__':
     
     sfm = SFM(opts)
     sfm.Run()
-
-# matcher_temp = getattr(cv2, opts.matcher)()
-# kps, descs = [], []
-# for n in self.image_names: 
-#     if n in self.image_data.keys():
-#         kp, desc = self._LoadFeatures(n)
-
-#         kps.append(kp)
-#         descs.append(desc)
-
-# matcher_temp.add(descs)
-# matcher_temp.train()
-
-# kp, desc = self._LoadFeatures(name)
-
-# matches_2d3d = matcher_temp.match(queryDescriptors=desc)
-
-# #retrieving 2d and 3d points
-# pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
-# for m in matches_2d3d: 
-#     train_img_idx, desc_idx, new_img_idx = m.imgIdx, m.trainIdx, m.queryIdx
-#     point_cloud_idx = self.image_data[self.image_names[train_img_idx]][-1][desc_idx]
-
-#     #if the match corresponds to a point in 3d point cloud
-#     if point_cloud_idx >= 0: 
-#         new_pt = self.point_cloud[int(point_cloud_idx)]
-#         pts3d = np.concatenate((pts3d, new_pt[np.newaxis]),axis=0)
-
-#         new_pt = np.array(kp[int(new_img_idx)].pt)
-#         pts2d = np.concatenate((pts2d, new_pt[np.newaxis]),axis=0)
-# return pts3d, pts2d, len(kp)
