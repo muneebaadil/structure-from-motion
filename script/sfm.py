@@ -18,9 +18,13 @@ class SFM(object):
         self.feat_dir = os.path.join(opts.data_dir, opts.dataset, 'features', opts.features)
         self.matches_dir = os.path.join(opts.data_dir, opts.dataset, 'matches', opts.matcher)
         self.out_cloud_dir = os.path.join(opts.out_dir, opts.dataset, 'point-clouds')
+        self.out_err_dir = os.path.join(opts.out_dir, opts.dataset, 'point-clouds')
 
         if not os.path.exists(self.out_cloud_dir): 
             os.makedirs(self.out_cloud_dir)
+
+        if (opts.plot_error is True) and (not os.path.exists(self.out_err_dir)): 
+            os.makedirs(self.out_err_dir)
 
         self.image_names = [x.split('.')[0] for x in sorted(os.listdir(self.images_dir)) \
                             if x.split('.')[-1] in opts.ext]
@@ -230,9 +234,14 @@ class SFM(object):
             return out 
 
         R, t, ref = self.image_data[name]
-        reprojs = _ComputeReprojections(self.point_cloud[ref], R, t, self.K)
+        reproj_pts = _ComputeReprojections(self.point_cloud[ref[ref>0].astype(int)], R, t, self.K)
+
+        kp, desc = self._LoadFeatures(name)
+        img_pts = np.array([kp_.pt for i, kp_ in enumerate(kp) if ref[i] > 0])
         
-                
+        err = np.mean(np.sqrt(np.sum((img_pts-reproj_pts)**2,axis=-1)))
+        return err
+        
     def Run(self):
         name1, name2 = self.image_names[0], self.image_names[1]
 
@@ -257,11 +266,16 @@ class SFM(object):
 
         #3d point cloud generation and reprojection error evaluation
         self.ToPly(os.path.join(self.out_cloud_dir, 'cloud_{}_view.ply'.format(views_done)))
-        self._computeReprojectionError(name1)
 
+        err1 = self._ComputeReprojectionError(name1)
+        err2 = self._ComputeReprojectionError(name2)
+
+        print 'Camera {}: Reprojection Error = {}'.format(name1, err1)
+        print 'Camera {}: Reprojection Error = {}'.format(name2, err2)
 
         for new_name in self.image_names[2:]: 
 
+            #new camera registration
             t1 = time()
             self._NewViewPoseEstimation(new_name)
             t2 = time()
@@ -269,17 +283,22 @@ class SFM(object):
             total_time += this_time
             print 'Camera {0}: Pose Estimation [time={1:.3}s]'.format(new_name, this_time)
 
+            #triangulation for new registered camera
             self._TriangulateNewView(new_name)
             t1 = time()
             this_time = t1-t2
             total_time += this_time
             print 'Camera {0}: Triangulation [time={1:.3}s]'.format(new_name, this_time)
 
+            #3d point cloud update and error for new camera
             views_done += 1 
             self.ToPly(os.path.join(self.out_cloud_dir, 'cloud_{}_view.ply'.format(views_done)))
 
+            self._ComputeReprojectionError(new_name)
+            print 'Camera {}: Reprojection Error = {}'.format(new_name, new_err)
+
         print 'Reconstruction Completed [t={0:.6}s], \
-                Results stored in {1}'.format(total_time, self.out_dir)
+                Results stored in {1}'.format(total_time, self.opts.out_dir)
         
 
 def SetArguments(parser): 
@@ -319,14 +338,11 @@ def SetArguments(parser):
     
     parser.add_argument('--pnp_method',action='store',type=str,default='SOLVEPNP_DLS',
                         dest='pnp_method',help='[SOLVEPNP_DLS | SOLVEPNP_EPNP] method used for \
-                        PnP estimation, see OpenCV doc for more options (default: SOLVEPNP_DLS'))
+                        PnP estimation, see OpenCV doc for more options (default: SOLVEPNP_DLS')
     parser.add_argument('--pnp_prob',action='store',type=float,default=.99,dest='pnp_prob',
                         help='confidence in PnP estimation required (default: 0.99)')
 
     #misc
-    parser.add_argument('--allow_duplicates',action='store',type=str,default=True,
-                        dest='allow_duplicates')
-    parser.add_argument('--color_policy',action='store',type=str,default='avg',dest='color_policy')
     parser.add_argument('--plot_error',action='store',type=bool,default=False,dest='plot_error')  
     parser.add_argument('--verbose',action='store',type=bool,default=True,dest='verbose')  
 

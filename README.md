@@ -2,7 +2,7 @@
 
 A self reliant tutorial on _Structure from Motion_ (SFM). 
 
-![](results/misc-figs/denser.png)
+![](results/misc-figs/fountain_p11.png)
 
 In this repository, we provide
 * Self-reliant tutorial on SFM
@@ -84,6 +84,8 @@ Tutorials are in `tutorial/` directory. Furthermore, they're divided in followin
     --out_dir   root directory to store results in (default: ../data/fountain-P11)
 
     --features  [SIFT|SURF] Feature algorithm to use (default: SURF)
+    --matcher   [BFMatcher|FlannBasedMatcher] Matching algorithm to use (default: BFMatcher)
+    --cross_check   [True|False] Whether to cross check feature matching or not (default: True)
 
     --print_every   [1,+inf] print progress every print_every seconds, -1 to disable (default: 1)
     --save_results  [True|False] whether to save images with keypoints drawn on them (default: False)
@@ -115,19 +117,14 @@ Tutorials are in `tutorial/` directory. Furthermore, they're divided in followin
 
     --features        [SIFT|SURF] Feature algorithm to use (default: SURF)
     --matcher        [BFMatcher|FlannBasedMatcher] Matching algorithm to use (default: BFMatcher)
-    --cross_check        [True|False] Whether to cross check feature matching or not (default: True)
-    --calibration_mat        [benchmark|lg_g3] type of intrinsic camera to use (default: benchmark)
-    --fund_method        method to estimate fundamental matrix (default: FM_RANSAC)
-    --outlier_thres        threhold value of outlier to be used in fundamental matrix estimation (default: 0.9)
-    --fund_prob        confidence in fundamental matrix estimation required(default: 0.9)
-
-    --pnp_method PNP_METHOD
-    --pnp_prob PNP_PROB
+    --calibration_mat        [benchmark|lg_g3] Type of intrinsic camera to use (default: benchmark)
     
-    --allow_duplicates ALLOW_DUPLICATES
-    --color_policy COLOR_POLICY
-    --plot_error PLOT_ERROR
-    --verbose VERBOSE
+    --fund_method        [FM_RANSAC | FM_8POINT] Method to estimate fundamental matrix (default: FM_RANSAC)
+    --outlier_thres        Threshold value of outlier to be used in fundamental matrix estimation (default: 0.9)
+    --fund_prob        [0, 1] Confidence in fundamental matrix estimation required(default: 0.9)
+
+    --pnp_method    [SOLVEPNP_DLS | SOLVEPNP_EPNP | ...] Method used for PnP estimation (default: SOLVEPNP_DLS)
+    --pnp_prob  [0, 1] Confidence in PnP estimation required (default: 0.99)
     ```
 
 ### 2.3. Booklet
