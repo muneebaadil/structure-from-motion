@@ -122,3 +122,28 @@ def pts2ply(pts,colors,filename='out.ply'):
         for pt, cl in izip(pts,colors): 
             f.write('{} {} {} {} {} {}\n'.format(pt[0],pt[1],pt[2],
                                                 cl[0],cl[1],cl[2]))
+
+def DrawCorrespondences(img, ptsTrue, ptsReproj, ax, drawOnly=50): 
+    """
+    Draws correspondence between ground truth and reprojected feature point
+
+    Args: 
+    ptsTrue, ptsReproj: (n,2) numpy array
+    ax: matplotlib axis object
+    drawOnly: max number of random points to draw
+
+    Returns: 
+    ax: matplotlib axis object
+    """
+    ax.imshow(img)
+    
+    randidx = np.random.choice(ptsTrue.shape[0],size=(drawOnly,),replace=False)
+    ptsTrue_, ptsReproj_ = ptsTrue[randidx], ptsReproj[randidx]
+    
+    colors = colors=np.random.rand(drawOnly,3)
+    
+    ax.scatter(ptsTrue_[:,0],ptsTrue_[:,1],marker='x',c='r',linewidths=.1, label='Ground Truths')
+    ax.scatter(ptsReproj_[:,0],ptsReproj_[:,1],marker='x',c='b',linewidths=.1, label='Reprojected')
+    ax.legend()
+
+    return ax

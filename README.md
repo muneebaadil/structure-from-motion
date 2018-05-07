@@ -110,18 +110,18 @@ Tutorials are in `tutorial/` directory. Furthermore, they're divided in followin
     optional arguments:
     -h, --help            show this help message and exit
     
-    --data_dir        root directory containing input data (default: ../data/)
-    --dataset        name of dataset (default: fountain-P11)
-    --ext        comma seperated string of allowed image extensions (default: jpg,png)
-    --out_dir        root directory to store results in (default: ../results/)
+    --data_dir  root directory containing input data (default: ../data/)
+    --dataset   name of dataset (default: fountain-P11)
+    --ext   comma seperated string of allowed image extensions (default: jpg,png)
+    --out_dir   root directory to store results in (default: ../results/)
 
-    --features        [SIFT|SURF] Feature algorithm to use (default: SURF)
-    --matcher        [BFMatcher|FlannBasedMatcher] Matching algorithm to use (default: BFMatcher)
-    --calibration_mat        [benchmark|lg_g3] Type of intrinsic camera to use (default: benchmark)
+    --features  [SIFT|SURF] Feature algorithm to use (default: SURF)
+    --matcher   [BFMatcher|FlannBasedMatcher] Matching algorithm to use (default: BFMatcher)
+    --calibration_mat   [benchmark|lg_g3] Type of intrinsic camera to use (default: benchmark)
     
-    --fund_method        [FM_RANSAC | FM_8POINT] Method to estimate fundamental matrix (default: FM_RANSAC)
-    --outlier_thres        Threshold value of outlier to be used in fundamental matrix estimation (default: 0.9)
-    --fund_prob        [0, 1] Confidence in fundamental matrix estimation required(default: 0.9)
+    --fund_method   [FM_RANSAC | FM_8POINT] Method to estimate fundamental matrix (default: FM_RANSAC)
+    --outlier_thres     Threshold value of outlier to be used in fundamental matrix estimation (default: 0.9)
+    --fund_prob     [0, 1] Confidence in fundamental matrix estimation required(default: 0.9)
 
     --pnp_method    [SOLVEPNP_DLS | SOLVEPNP_EPNP | ...] Method used for PnP estimation (default: SOLVEPNP_DLS)
     --pnp_prob  [0, 1] Confidence in PnP estimation required (default: 0.99)

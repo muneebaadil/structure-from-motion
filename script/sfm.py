@@ -4,9 +4,23 @@ import argparse
 import pickle
 import os 
 from time import time
+import matplotlib.pyplot as plt
 
 from utils import * 
 import pdb 
+
+class Camera(object): 
+    def __init__(self, R, t, ref): 
+        self.R = R 
+        self.t = t 
+        self.ref = ref
+
+class Match(object): 
+    def __init__(self, matches, img1pts, img2pts, img1idx, img2idx, mask): 
+        self.matches = matches
+        self.img1pts, self.img2pts = img1pts, img2pts 
+        self.img1idx, self.img2idx = img1idx, img2idx
+        self.mask = mask
 
 class SFM(object): 
     def __init__(self, opts): 
@@ -18,8 +32,9 @@ class SFM(object):
         self.feat_dir = os.path.join(opts.data_dir, opts.dataset, 'features', opts.features)
         self.matches_dir = os.path.join(opts.data_dir, opts.dataset, 'matches', opts.matcher)
         self.out_cloud_dir = os.path.join(opts.out_dir, opts.dataset, 'point-clouds')
-        self.out_err_dir = os.path.join(opts.out_dir, opts.dataset, 'point-clouds')
+        self.out_err_dir = os.path.join(opts.out_dir, opts.dataset, 'errors')
 
+        #output directories
         if not os.path.exists(self.out_cloud_dir): 
             os.makedirs(self.out_cloud_dir)
 
@@ -29,7 +44,8 @@ class SFM(object):
         self.image_names = [x.split('.')[0] for x in sorted(os.listdir(self.images_dir)) \
                             if x.split('.')[-1] in opts.ext]
 
-        self.image_data, self.matches_data = {}, {}
+        #setting up shared parameters for the pipeline
+        self.image_data, self.matches_data, errors = {}, {}, {}
         self.matcher = getattr(cv2, opts.matcher)(crossCheck=opts.cross_check)
 
         if opts.calibration_mat == 'benchmark': 
@@ -240,6 +256,17 @@ class SFM(object):
         img_pts = np.array([kp_.pt for i, kp_ in enumerate(kp) if ref[i] > 0])
         
         err = np.mean(np.sqrt(np.sum((img_pts-reproj_pts)**2,axis=-1)))
+
+        if self.opts.plot_error: 
+            fig,ax = plt.subplots()
+            image = cv2.imread(os.path.join(self.images_dir, name+'.jpg'))[:,:,::-1]
+            ax = DrawCorrespondences(image, img_pts, reproj_pts, ax)
+            
+            ax.set_title('reprojection error = {}'.format(err))
+
+            fig.savefig(os.path.join(self.out_err_dir, '{}.png'.format(name)))
+            plt.close(fig)
+            
         return err
         
     def Run(self):
@@ -314,7 +341,7 @@ def SetArguments(parser):
     parser.add_argument('--out_dir',action='store',type=str,default='../results/',dest='out_dir',
                         help='root directory to store results in (default: ../results/)') 
 
-    #computing parameters
+    #matching parameters
     parser.add_argument('--features',action='store',type=str,default='SURF',dest='features',
                         help='[SIFT|SURF] Feature algorithm to use (default: SURF)')
     parser.add_argument('--matcher',action='store',type=str,default='BFMatcher',dest='matcher',
@@ -324,18 +351,20 @@ def SetArguments(parser):
                         help='[True|False] Whether to cross check feature matching or not \
                         (default: True)') 
 
+    #epipolar geometry parameters
     parser.add_argument('--calibration_mat',action='store',type=str,default='benchmark',
                         dest='calibration_mat',help='[benchmark|lg_g3] type of intrinsic camera \
                         to use (default: benchmark)')
     parser.add_argument('--fund_method',action='store',type=str,default='FM_RANSAC',
                         dest='fund_method',help='method to estimate fundamental matrix \
                         (default: FM_RANSAC)')
-    parser.add_argument('--outlier_thres',action='store',type=float,default=.9,dest='outlier_thres',
-                        help='threhold value of outlier to be used in fundamental matrix estimation\
-                         (default: 0.9)')
+    parser.add_argument('--outlier_thres',action='store',type=float,default=.9,
+                        dest='outlier_thres',help='threhold value of outlier to be used in\
+                         fundamental matrix estimation (default: 0.9)')
     parser.add_argument('--fund_prob',action='store',type=float,default=.9,dest='fund_prob',
                         help='confidence in fundamental matrix estimation required (default: 0.9)')
     
+    #PnP parameters
     parser.add_argument('--pnp_method',action='store',type=str,default='SOLVEPNP_DLS',
                         dest='pnp_method',help='[SOLVEPNP_DLS | SOLVEPNP_EPNP] method used for \
                         PnP estimation, see OpenCV doc for more options (default: SOLVEPNP_DLS')
@@ -343,8 +372,7 @@ def SetArguments(parser):
                         help='confidence in PnP estimation required (default: 0.99)')
 
     #misc
-    parser.add_argument('--plot_error',action='store',type=bool,default=False,dest='plot_error')  
-    parser.add_argument('--verbose',action='store',type=bool,default=True,dest='verbose')  
+    parser.add_argument('--plot_error',action='store',type=bool,default=True,dest='plot_error')
 
 def PostprocessArgs(opts): 
     opts.fund_method = getattr(cv2,opts.fund_method)
