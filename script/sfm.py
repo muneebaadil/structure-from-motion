@@ -213,11 +213,37 @@ class SFM(object):
                     new_pt = np.array(kp[int(new_img_idx)].pt)
                     pts2d = np.concatenate((pts2d, new_pt[np.newaxis]),axis=0)
 
-            return pts3d, pts2d, np.array(kp).shape[0]
+            return pts3d, pts2d, len(kp)
+        
+        def __Find2D3DMatches():
+            pts3d, pts2d = np.zeros((0,3)), np.zeros((0,2))
+            kp, desc = self._LoadFeatures(name)
+
+            i = 0 
+            
+            while i < len(self.image_names): 
+                curr_name = self.image_names[i]
+
+                if curr_name in self.image_data.keys(): 
+                    matches = self._LoadMatches(curr_name, name)
+
+                    ref = self.image_data[curr_name][-1]
+                    pts3d_idx = np.array([ref[m.queryIdx] for m in matches \
+                                        if ref[m.queryIdx] > 0])
+                    pts2d_ = np.array([kp[m.trainIdx].pt for m in matches \
+                                        if ref[m.queryIdx] > 0])
+                                        
+                    pts3d = np.concatenate((pts3d, self.point_cloud[pts3d_idx.astype(int)]),axis=0)
+                    pts2d = np.concatenate((pts2d, pts2d_),axis=0)
+
+                i += 1 
+
+            return pts3d, pts2d, len(kp)
 
         pts3d, pts2d, ref_len = _Find2D3DMatches()
         _, R, t, _ = cv2.solvePnPRansac(pts3d[:,np.newaxis],pts2d[:,np.newaxis],self.K,None,
-                            confidence=self.opts.pnp_prob,flags=getattr(cv2,opts.pnp_method))
+                            confidence=self.opts.pnp_prob,flags=getattr(cv2,self.opts.pnp_method),
+                            reprojectionError=self.opts.reprojection_thres)
         R,_=cv2.Rodrigues(R)
         self.image_data[name] = [R,t,np.ones((ref_len,))*-1]
 
@@ -272,7 +298,7 @@ class SFM(object):
     def Run(self):
         name1, name2 = self.image_names[0], self.image_names[1]
 
-        total_time = 0
+        total_time, errors = 0, []
 
         t1 = time()
         self._BaselinePoseEstimation(name1, name2)
@@ -296,6 +322,8 @@ class SFM(object):
 
         err1 = self._ComputeReprojectionError(name1)
         err2 = self._ComputeReprojectionError(name2)
+        errors.append(err1)
+        errors.append(err2)
 
         print 'Camera {}: Reprojection Error = {}'.format(name1, err1)
         print 'Camera {}: Reprojection Error = {}'.format(name2, err2)
@@ -321,11 +349,13 @@ class SFM(object):
             views_done += 1 
             self.ToPly(os.path.join(self.out_cloud_dir, 'cloud_{}_view.ply'.format(views_done)))
 
-            self._ComputeReprojectionError(new_name)
+            new_err = self._ComputeReprojectionError(new_name)
+            errors.append(new_err)
             print 'Camera {}: Reprojection Error = {}'.format(new_name, new_err)
 
-        print 'Reconstruction Completed [t={0:.6}s], \
-                Results stored in {1}'.format(total_time, self.opts.out_dir)
+        mean_error = sum(errors) / float(len(errors))
+        print 'Reconstruction Completed: Mean Reprojection Error = {2} [t={0:.6}s], \
+                Results stored in {1}'.format(total_time, self.opts.out_dir, mean_error)
         
 
 def SetArguments(parser): 
@@ -366,13 +396,16 @@ def SetArguments(parser):
     
     #PnP parameters
     parser.add_argument('--pnp_method',action='store',type=str,default='SOLVEPNP_DLS',
-                        dest='pnp_method',help='[SOLVEPNP_DLS | SOLVEPNP_EPNP] method used for \
+                        dest='pnp_method',help='[SOLVEPNP_DLS|SOLVEPNP_EPNP|..] method used for\
                         PnP estimation, see OpenCV doc for more options (default: SOLVEPNP_DLS')
     parser.add_argument('--pnp_prob',action='store',type=float,default=.99,dest='pnp_prob',
                         help='confidence in PnP estimation required (default: 0.99)')
+    parser.add_argument('--reprojection_thres',action='store',type=float,default=8.,
+                        dest='reprojection_thres',help='reprojection threshold in PnP estimation \
+                        (default: 8.)')
 
     #misc
-    parser.add_argument('--plot_error',action='store',type=bool,default=True,dest='plot_error')
+    parser.add_argument('--plot_error',action='store',type=bool,default=False,dest='plot_error')
 
 def PostprocessArgs(opts): 
     opts.fund_method = getattr(cv2,opts.fund_method)
