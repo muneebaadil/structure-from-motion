@@ -5,3 +5,4 @@ data/
 !tutorial.ipynb
 .vscode/
 *.ply
+*.txt
