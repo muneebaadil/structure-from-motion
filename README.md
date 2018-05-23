@@ -128,7 +128,7 @@ Tutorials are in `tutorial/` directory. Furthermore, they're divided in followin
     ```
 
 ### 2.3. Booklet
-Initial draft of the booklet will be available soon. 
+Initial draft of the booklet can be accessed from [here](booklet/init_draft.pdf)
 
 ## 3. Results
 ### 3.2. Qualitative 
