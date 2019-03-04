@@ -56,8 +56,6 @@ Tutorials are in `tutorial/` directory. Furthermore, they're divided in followin
 2. Chapter 2: Epipolar Geometry
 3. Chapter 3: 3D Scene Estimations
 4. Chapter 4: Putting It Together: Part I
-5. Chapter 5: Bundle Adjustment (Ongoing)
-6. Chapter 6: Putting It Together: Part II (Ongoing)
 
 ### 2.2. SFM Script
 1. Go to `script/` directory
@@ -126,9 +124,6 @@ Tutorials are in `tutorial/` directory. Furthermore, they're divided in followin
     --pnp_method    [SOLVEPNP_DLS | SOLVEPNP_EPNP | ...] Method used for PnP estimation (default: SOLVEPNP_DLS)
     --pnp_prob  [0, 1] Confidence in PnP estimation required (default: 0.99)
     ```
-
-### 2.3. Booklet
-Initial draft of the booklet can be accessed from [here](booklet/init_draft.pdf)
 
 ## 3. Results
 ### 3.2. Qualitative 
