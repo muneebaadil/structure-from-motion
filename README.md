@@ -126,29 +126,15 @@ Tutorials are in `tutorial/` directory. Furthermore, they're divided in followin
     ```
 
 ## 3. Results
-### 3.2. Qualitative 
-#### 3.2.1. Fountain P11
+### 3.1. Fountain P11
 ![](results/misc-figs/fountain_p11.png)
 
-#### 3.2.3. Herz Jesus P8
+### 3.2. Herz Jesus P8
 ![](results/misc-figs/herz_jesus_p8.png)
 
-#### 3.2.2. Entry P10
+### 3.3. Entry P10
 ![](results/misc-figs/entry_p10.png)
 
-### 3.1. Quantitative
-#### 3.1.1. Feature Extraction
-![](results/misc-figs/featextraction.png)
-
-#### 3.1.2. Reprojection Error and Running Time
-| Dataset  | SIFT  || SURF || 
-| ------------- | ------------- | ------------- | ------------- | ------------- | 
-|| Total | Average | Total | Average |
-| Fountain P11  | Content Cell  | Content Cell  | Content Cell  | Content Cell  |
-| Entry P10  | Content Cell  | Content Cell  | Content Cell  | Content Cell  |
-| Herz Jesus P8  | Content Cell  | Content Cell  | Content Cell  | Content Cell  |
-
 ## Authors
-
-* [Muneeb Aadil](https://github.com/muneebaadil) (imuneebaadil@gmail.com)
-* [Sibt ul Hussain](https://sites.google.com/site/sibtulhussain/) (sibtul.hussain@nu.edu.pk)
+* [Muneeb Aadil](https://muneebaadil.github.io)
+* [Sibt ul Hussain](https://sites.google.com/site/sibtulhussain/)
