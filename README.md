@@ -1,4 +1,4 @@
-# (Ongoing) How to Structure from Motion 
+# How to Structure from Motion 
 
 A self reliant tutorial on _Structure from Motion_ (SFM). 
 
