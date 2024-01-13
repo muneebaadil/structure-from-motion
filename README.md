@@ -1,6 +1,6 @@
-# How to Structure from Motion 
+# Structure from Motion 
 
-A self reliant tutorial on _Structure from Motion_ (SFM). 
+Structure from Motion (SFM) from scratch, using Numpy and OpenCV. 
 
 ![](results/misc-figs/fountain_p11.png)
 
